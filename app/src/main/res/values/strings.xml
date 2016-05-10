@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">DTH</string>
+    <string name="action_account">Account</string>
+    <string name="action_logout">Logout</string>
+    <string name="action_feedback">Feedback</string>
+    <string name="not_down">not down</string>
+    <string name="down">down</string>
+    <string name="facebook_app_id">864742473635415</string>
+    <string name="parse_app_id">abcdefg</string>
+    <string name="parse_server">"http://127.0.0.1:1337/parse"</string>
+    <string name="me">Me</string>
+    <string name="nearby">Nearby</string>
+    <string name="facebook_button_details">We don\'t post anything to Facebook</string>
+    <string name="eula_text">By creating an account you agree to the End User License Agreement and acknowledge that you have read it.</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="tap_below">(tap below to get started)</string>
+    <string name="dth_button_desc">DTH is a button you press when you want to hang out with your friends.</string>
+    <string name="welcome">Welcome</string>
+    <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+    <string name="menu_search">Search</string>
+    <string name="about">About</string>
+    <string name="finished">finished</string>
+    <string name="next">Next</string>
+    <string name="need_to_know_in">Need to know in</string>
+    <string name="DT">DT%1$s</string>
+    <string name="finishes_in">finishes in %1$s</string>
+    <string name="remove">remove</string>
+</resources>

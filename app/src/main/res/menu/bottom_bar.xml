@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/bottom_bar_me"
+        android:icon="@drawable/ic_person_24dp"
+        android:title="@string/me"/>
+    <item
+        android:id="@+id/bottom_bar_dth"
+        android:icon="@mipmap/ic_launcher"
+        android:title="@string/app_name"/>
+    <item
+        android:id="@+id/bottom_bar_nearby"
+        android:icon="@drawable/ic_group_24dp"
+        android:title="@string/nearby"/>
+</menu>
