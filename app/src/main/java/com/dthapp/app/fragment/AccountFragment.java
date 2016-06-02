@@ -1,4 +1,4 @@
-package com.dthapp.fragment;
+package com.dthapp.app.fragment;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -9,9 +9,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.dthapp.LoginManager;
+import com.dthapp.app.LoginManager;
 import com.dthapp.R;
-import com.dthapp.User;
+import com.dthapp.app.User;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
 

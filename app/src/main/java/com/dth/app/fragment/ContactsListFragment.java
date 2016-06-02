@@ -1,10 +1,13 @@
-package com.dthapp.fragment;
+package com.dth.app.fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.provider.ContactsContract.Contacts;
+import android.provider.Telephony;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -19,8 +22,12 @@ import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.dthapp.R;
-import com.mikhaellopez.circularimageview.CircularImageView;
+import com.dth.app.R;
+
+import java.util.ArrayList;
+
+import io.branch.invite.util.BranchInviteUtil;
+import io.branch.invite.util.CircularImageView;
 
 public class ContactsListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
@@ -58,26 +65,38 @@ public class ContactsListFragment extends ListFragment implements
         mOnContactSelectedListener.onContactSelected(phoneNumber);
     }
 
-    static final String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
-            ContactsContract.CommonDataKinds.Phone._ID,
-            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-            ContactsContract.CommonDataKinds.Phone.NUMBER,
-    };
+    private static final Uri URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+    private static String[] PROJECTION = null;
 
-    static String SELECTION = "((" + ContactsContract.Contacts.DISPLAY_NAME + " NOTNULL) " +
-            "AND (" + ContactsContract.Contacts.DISPLAY_NAME + " != '' ) " +
-            "AND ("+ContactsContract.Contacts.HAS_PHONE_NUMBER +" != '0'"+")) " +
-            "AND "+Contacts.IN_VISIBLE_GROUP+"=1 ";
-//            "AND " +ContactsContract.CommonDataKinds.Phone.TYPE + " = " + ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE;
+    static {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            PROJECTION = new String[]{
+                    ContactsContract.CommonDataKinds.Phone._ID,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.TYPE,
+                    ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI};
+        } else {
+            PROJECTION = new String[]{
+                    ContactsContract.Contacts._ID,
+                    ContactsContract.Contacts.LOOKUP_KEY,
+                    ContactsContract.CommonDataKinds.Phone._ID,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.TYPE};
+        }
+    }
+
+    private static final String SORT =  ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(),
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                CONTACTS_SUMMARY_PROJECTION,
-                SELECTION,
+                URI,
+                PROJECTION,
                 null,
-                Contacts.SORT_KEY_PRIMARY);
+                null,
+                SORT);
     }
 
     @Override
@@ -155,5 +174,30 @@ public class ContactsListFragment extends ListFragment implements
             TextView name;
             CircularImageView icon;
         }
+    }
+
+    public Intent getInviteIntent(String referralUrl, ArrayList<String> selectedContacts, String subject, String message) {
+        Intent inviteIntent;
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            inviteIntent = new Intent(Intent.ACTION_SENDTO);
+            inviteIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            inviteIntent.setType("vnd.android-dir/mms-sms");
+            inviteIntent.setData(Uri.parse("sms:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
+            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
+        } else {
+            inviteIntent = new Intent(Intent.ACTION_SENDTO);
+            inviteIntent.setType("text/plain");
+            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
+            inviteIntent.setData(Uri.parse("smsto:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
+
+            // In any old version of SMS app checking for subject and text params
+            inviteIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+            inviteIntent.putExtra(android.content.Intent.EXTRA_TEXT, message + "\n" + referralUrl);
+            inviteIntent.putExtra("address", BranchInviteUtil.formatListToCSV(selectedContacts));
+
+            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(getContext());
+            inviteIntent.setPackage(defaultSmsPackageName);
+        }
+        return inviteIntent;
     }
 }

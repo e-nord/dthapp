@@ -1,6 +1,8 @@
-package com.dthapp.fragment;
+package com.dth.app.fragment;
 
 import android.app.AlarmManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputEditText;
@@ -15,7 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.dthapp.R;
+import com.dth.app.R;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,8 +25,9 @@ import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import io.branch.invite.TabbedInviteBuilder;
 
-public class DTCreateFragment extends Fragment {
+public class EventCreateFragment extends Fragment {
 
     @Bind(R.id.dt_create_spinner)
     AppCompatSpinner spinner;
@@ -35,20 +38,21 @@ public class DTCreateFragment extends Fragment {
     @Bind(R.id.dt_create_next_button)
     Button next;
 
-    public static DTCreateFragment newInstance() {
-        return new DTCreateFragment();
+    public static EventCreateFragment newInstance() {
+        return new EventCreateFragment();
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.dt_create_view, container, false);
+        View view = inflater.inflate(R.layout.dt_create_view, container, false);
+        ButterKnife.bind(this, view);
+        return view;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
 
         String text = edit.getText().toString();
         updateTitle(text);
@@ -83,11 +87,24 @@ public class DTCreateFragment extends Fragment {
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                new TabbedInviteBuilder(getActivity(), "Inviting userID", "Inviting user Name")
+                        .setPhoneTabText(R.string.contacts)
+                        //.setTabStyle(getActivity().getResources().getDrawable(R.drawable.tab_on), getActivity().getResources().getDrawable(R.drawable.tab_off))
+                        .setPositiveButtonStyle(new ColorDrawable(Color.TRANSPARENT),"Invite", Color.BLUE)
+                        .setNegativeButtonStyle(new ColorDrawable(Color.TRANSPARENT),"Close", Color.MAGENTA)
+                        .setInviterImageUrl("https://s3-us-west-1.amazonaws.com/branchhost/mosaic_og.png")
+                        .setInvitationText("Invitation Title", "Invitation Message")
+                        .setPhoneTabText("Message")
+                        .setEmailTabText("E-mail")
+                        //.setTitle("Invite a friend")
+                        .setSelectedItemColor(Color.parseColor("#FF0000FF"))
+                        .addCustomParams("Custom_Param", "This is a custom param")
+                        .create().show();
                 getActivity().getSupportFragmentManager().
                         beginTransaction().
                         setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right).
                         addToBackStack("invite").
-                        add(R.id.content_main, DTInviteFragment.newInstance()).
+                        add(R.id.content_main, EventInviteFragment.newInstance()).
                         commit();
             }
         });

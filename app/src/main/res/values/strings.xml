@@ -5,9 +5,11 @@
     <string name="action_feedback">Feedback</string>
     <string name="not_down">not down</string>
     <string name="down">down</string>
-    <string name="facebook_app_id">864742473635415</string>
-    <string name="parse_app_id">abcdefg</string>
+    <string name="facebook_app_id">697540903696104</string>
+    <string name="fabric_api_key">086de2dcfb86fdb1fe42a8237369b8b68270c17c</string>
+    <string name="parse_app_id">DYUzK3cb2qmKkGeVExRoe6nmj96SCP8fPPq3Ixhp</string>
     <string name="parse_server">"http://127.0.0.1:1337/parse"</string>
+    <string name="parse_client_key">IZfr5myMCPIkZhA5BLSa42Z5IlMQf1qALFZbXmdc</string>
     <string name="me">Me</string>
     <string name="nearby">Nearby</string>
     <string name="facebook_button_details">We don\'t post anything to Facebook</string>
@@ -25,4 +27,6 @@
     <string name="DT">DT%1$s</string>
     <string name="finishes_in">finishes in %1$s</string>
     <string name="remove">remove</string>
+    <string name="contacts">Contacts</string>
+    <string name="friends">Friends</string>
 </resources>

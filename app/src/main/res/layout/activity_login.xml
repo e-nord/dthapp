@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".activity.LoginActivity">
+    tools:context="com.dth.app.activity.LoginActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -22,53 +22,67 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:orientation="vertical">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ImageView
-            android:layout_width="150dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:adjustViewBounds="true"
-            android:background="@drawable/dth_logo_green"
-            android:contentDescription="@string/app_name"/>
+        <TextView
+            android:id="@+id/login_title"
+            fontPath="fonts/Braggadocio.ttf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="72dp"
+            android:text="@string/app_name"
+            android:textColor="@color/colorPrimary"
+            android:textSize="64sp"
+            tools:ignore="MissingPrefix"/>
 
         <Button
-            android:id="@+id/facebook_login_button"
+            android:id="@+id/login_facebook_login_button"
             style="@style/ParseLoginUI.Button.ThirdPartyLogin"
             android:layout_width="250dp"
             android:layout_height="50dp"
+            android:layout_below="@id/login_title"
+            android:layout_centerHorizontal="true"
             android:layout_marginBottom="8dp"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="24dp"
             android:background="@drawable/com_parse_ui_facebook_login_button_background_selector"
             android:drawableLeft="@drawable/com_parse_ui_facebook_login_logo"
             android:text="@string/com_parse_ui_facebook_login_button_label"/>
 
         <TextView
+            android:id="@+id/login_facebook_login_button_details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/login_facebook_login_button"
+            android:layout_centerHorizontal="true"
             android:layout_marginBottom="48dp"
             android:gravity="center"
             android:text="@string/facebook_button_details"
             android:textSize="14sp"/>
 
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:adjustViewBounds="true"
+            android:background="@mipmap/hang_loose"
+            tools:ignore="ContentDescription"/>
+
         <TextView
             style="@style/fine_print"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/login_facebook_login_button_details"
+            android:layout_centerHorizontal="true"
             android:layout_marginLeft="50dp"
             android:layout_marginRight="50dp"
             android:gravity="center"
             android:text="@string/eula_text"/>
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-    </LinearLayout>
+    </RelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>

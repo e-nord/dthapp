@@ -14,7 +14,7 @@
  * limitations under the License. 
  */
 
-package com.dthapp.fragment;
+package com.dth.app.fragment;
 
 import android.content.Context;
 import android.os.Bundle;

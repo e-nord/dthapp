@@ -1,4 +1,4 @@
-package com.dthapp;
+package com.dth.app;
 
 
 public class DT {

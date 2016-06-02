@@ -1,9 +1,11 @@
-package com.dthapp.activity;
+package com.dth.app.activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -17,34 +19,42 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.Toast;
 
-import com.dthapp.LoginManager;
-import com.dthapp.R;
-import com.dthapp.User;
-import com.dthapp.fragment.AccountFragment;
-import com.dthapp.fragment.DTCreateFragment;
-import com.dthapp.fragment.DTInviteFragment;
-import com.dthapp.fragment.DTListFragment;
-import com.dthapp.fragment.IntroFragment;
+import com.dth.app.LoginManager;
+import com.dth.app.R;
+import com.dth.app.fragment.AccountFragment;
+import com.dth.app.fragment.EventCreateFragment;
+import com.dth.app.fragment.EventInviteFragment;
+import com.dth.app.fragment.HomeFragment;
+import com.dth.app.fragment.IntroFragment;
+import com.dth.app.fragment.NearbyFragment;
 import com.facebook.appevents.AppEventsLogger;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.parse.ParseFacebookUtils;
+import com.parse.ParseUser;
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.BottomBarTab;
 import com.roughike.bottombar.OnTabClickListener;
-import com.squareup.picasso.Picasso;
 
 import de.cketti.mailto.EmailIntentBuilder;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
 
-    private DTCreateFragment createFragment;
-    private DTInviteFragment inviteFragment;
-    private DTListFragment meFragment;
-    private DTListFragment nearbyFragment;
+    private EventCreateFragment createFragment;
+    private EventInviteFragment inviteFragment;
+    private HomeFragment homeFragment;
+    private NearbyFragment nearbyFragment;
     private AccountFragment accountFragment;
     private BottomBar bottomBar;
+
+    private static void launchFeedback(Activity activity) {
+        Intent intent = EmailIntentBuilder.from(activity).build();
+        //TODO populate fields
+        activity.startActivityForResult(intent, 0);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,11 +69,17 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        Intent intent = getIntent();
+        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            Uri uri = intent.getData();
+            //TODO url parsing and showing event details
+        }
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Picasso.with(this).load(LoginManager.INSTANCE.getUser().getPictureUrl()).fetch();
+        //Picasso.with(this).load(LoginManager.INSTANCE.getUser().getPictureUrl()).fetch();
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
@@ -77,11 +93,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        createFragment = DTCreateFragment.newInstance();
-        accountFragment = AccountFragment.newInstance();
-        nearbyFragment = DTListFragment.newInstance();
-        meFragment = DTListFragment.newInstance();
-        inviteFragment = DTInviteFragment.newInstance();
+        createFragment = EventCreateFragment.newInstance();
+        accountFragment = AccountFragment.newInstance(ParseUser.getCurrentUser());
+        nearbyFragment = NearbyFragment.newInstance();
+        homeFragment = HomeFragment.newInstance();
+        inviteFragment = EventInviteFragment.newInstance();
 
         bottomBar = BottomBar.attach(this, savedInstanceState);
         bottomBar.noNavBarGoodness();
@@ -103,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTabSelected(int position) {
                 if (position == 0) {
-                    showFragment(meFragment);
+                    showFragment(homeFragment);
                 } else if (position == 1) {
                     showFragment(createFragment);
                 } else if (position == 2) {
@@ -115,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTabReSelected(int position) {
                 if (position == 0) {
-                    showFragment(meFragment);
+                    showFragment(homeFragment);
                 } else if (position == 1) {
                     showFragment(createFragment);
                 } else if (position == 2) {
@@ -161,8 +177,13 @@ public class MainActivity extends AppCompatActivity {
         bottomBar.onSaveInstanceState(outState);
     }
 
-    private void showFragment(Fragment fragment, String tag){
-        if(!fragment.isVisible()) {
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    private void showFragment(Fragment fragment, String tag) {
+        if (!fragment.isVisible()) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.setCustomAnimations(R.anim.slide_in_up, 0, 0, R.anim.slide_out_down);
             transaction.replace(R.id.content_main, fragment);
@@ -173,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showFragment(Fragment fragment){
+    private void showFragment(Fragment fragment) {
         showFragment(fragment, null);
     }
 
@@ -185,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_feedback) {
             launchFeedback(this);
             return true;
-        } else if(item.getItemId() == R.id.action_about){
+        } else if (item.getItemId() == R.id.action_about) {
             new LibsBuilder()
                     .withActivityStyle(Libs.ActivityStyle.LIGHT_DARK_TOOLBAR)
                     .withVersionShown(true)
@@ -195,13 +216,14 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_logout) {
             LoginManager.INSTANCE.logout(new LoginManager.LogoutCallback() {
                 @Override
-                public void onUserLoggedOut(User user) {
+                public void onUserLoggedOut(ParseUser user) {
                     startActivity(new Intent(MainActivity.this, LoginActivity.class));
                     finish();
                 }
 
                 @Override
                 public void onError(Exception e) {
+                    Toast.makeText(MainActivity.this, "Logout failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     //TODO handle error
                 }
             });
@@ -214,12 +236,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         ParseFacebookUtils.onActivityResult(requestCode, resultCode, data);
-    }
-
-    private static void launchFeedback(Activity activity){
-        Intent intent = EmailIntentBuilder.from(activity).build();
-        //TODO populate fields
-        activity.startActivityForResult(intent, 0);
     }
 
 }

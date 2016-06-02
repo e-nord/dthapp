@@ -43,19 +43,17 @@
             android:layout_toRightOf="@id/dt_profile_pic"
             android:textSize="16sp"/>
 
-        <TextView
-            android:id="@+id/dt_hostname"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toRightOf="@id/dt_name"
-            android:textSize="16sp"/>
-
         <View
             android:id="@+id/dt_status_color"
             android:layout_width="10dp"
             android:layout_height="match_parent"
             android:layout_alignParentRight="true"/>
+
+        <TextView
+            android:id="@+id/dt_nearby_label"
+            android:layout_width="wrap_content"
+            android:text="@string/nearby"
+            android:layout_height="wrap_content"/>
 
         <TextView
             android:id="@+id/dt_status_text"

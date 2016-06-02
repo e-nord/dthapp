@@ -1,20 +1,40 @@
 apply plugin: 'com.android.application'
+//apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.dthapp"
+        applicationId "com.dth.app"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
     }
+    signingConfigs {
+        release {
+            storeFile file("release.keystore")
+            storePassword "ZnNZYg8Kc&>Va{M`>g~M]JyCPU~#+~"
+            keyAlias "dth-release"
+            keyPassword "ZnNZYg8Kc&>Va{M`>g~M]JyCPU~#+~"
+        }
+        debug {
+            storeFile file("debug.keystore")
+            storePassword "ZnNZYg8Kc&>Va{M`>g~M]JyCPU~#+~"
+            keyAlias "dth-debug"
+            keyPassword "ZnNZYg8Kc&>Va{M`>g~M]JyCPU~#+~"
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
         }
     }
 }
@@ -29,15 +49,20 @@ dependencies {
     compile 'com.roughike:bottom-bar:1.2.7'
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.facebook.android:facebook-android-sdk:4.10.0'
-    compile 'com.mikhaellopez:circularimageview:3.0.2'
     compile 'jp.wasabeef:picasso-transformations:2.1.0'
     compile 'com.parse:parsefacebookutils-v4-android:1.10.3@aar'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'de.cketti.mailto:email-intent-builder:1.0.0'
     compile 'com.daimajia.swipelayout:library:1.2.0@aar'
+    compile 'uk.co.chrisjenx:calligraphy:2.2.0'
+    compile 'io.branch.sdk.android:library:1.8.12'
+    compile 'io.branch.invite.sdk.android:library:0.1.0'
+    compile 'com.mikhaellopez:circularimageview:3.0.2'
     compile('com.mikepenz:aboutlibraries:5.6.2@aar') {
         transitive = true
     }
-    compile 'com.android.support:appcompat-v7:23.3.0'
-    compile 'com.android.support:design:23.3.0'
+    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar')
+    compile 'com.github.orhanobut:hawk:1.23'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:design:23.4.0'
 }

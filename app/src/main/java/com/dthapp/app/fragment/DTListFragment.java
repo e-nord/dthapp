@@ -1,4 +1,4 @@
-package com.dthapp.fragment;
+package com.dthapp.app.fragment;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -14,7 +14,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.dthapp.DT;
+import com.dthapp.app.DT;
 import com.dthapp.R;
 import com.squareup.picasso.Picasso;
 
