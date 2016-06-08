@@ -11,6 +11,12 @@ import android.widget.TextView;
 
 import com.dth.app.Constants;
 import com.dth.app.R;
+import com.parse.CountCallback;
+import com.parse.GetCallback;
+import com.parse.ParseException;
+import com.parse.ParseFile;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.squareup.picasso.Picasso;
 
@@ -38,12 +44,13 @@ public class AccountFragment extends Fragment {
     @Bind(R.id.account_dth_count)
     TextView dthCount;
 
-    public static AccountFragment newInstance(ParseUser user) {
-        Bundle args = new Bundle();
-        args.putString("objectId", user.getObjectId());
-        AccountFragment f = new AccountFragment();
-        f.setArguments(args);
-        return f;
+    @Bind(R.id.account_contacts_invited)
+    TextView contactsInvited;
+
+    private ParseUser user;
+
+    public static AccountFragment newInstance() {
+        return new AccountFragment();
     }
 
     @Nullable
@@ -55,68 +62,64 @@ public class AccountFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    public void onResume() {
+        super.onResume();
+        user.fetchIfNeededInBackground(new GetCallback<ParseUser>() {
+            @Override
+            public void done(ParseUser object, ParseException e) {
+                displayUser(object);
+            }
+        });
+    }
 
-        displayUser(ParseUser.getCurrentUser());
-
-//        ParseQuery<ParseUser> query = ParseUser.getQuery();
-//        query.whereEqualTo("objectId", getArguments().getString("objectId"));
-//        query.findInBackground(new FindCallback<ParseUser>() {
-//            @Override
-//            public void done(List<ParseUser> objects, ParseException e) {
-//                if (e == null) {
-//                    if (!objects.isEmpty()) {
-//                        displayUser(objects.get(0));
-//                    }
-//                }
-//            }
-//        });
+    public void setUser(ParseUser user){
+        this.user = user;
     }
 
     private void displayUser(ParseUser user) {
-        String userDisplayName = user.getString("displayName");
+        String userDisplayName = user.getString(Constants.UserDisplayNameKey);
 
         username.setText(userDisplayName);
 
-        String url = user.getString(Constants.UserProfilePicMediumKey);
-        if (url != null) {
-            Picasso.with(getActivity()).load(url).into(profilePic);
-            Picasso.with(getActivity()).load(url).noFade().transform(new BlurTransformation(getContext(), 4)).into(background);
+        ParseFile profilePicFile = user.getParseFile(Constants.UserProfilePicMediumKey);
+        if (profilePicFile != null) {
+            Picasso.with(getActivity()).load(profilePicFile.getUrl()).into(profilePic);
+            Picasso.with(getActivity()).load(profilePicFile.getUrl()).noFade().transform(new BlurTransformation(getContext(), 5)).into(background);
         } else {
-            //TODO use default profile pic
+            Picasso.with(getActivity()).load(R.drawable.ic_person_48).into(profilePic);
         }
 
         dthCount.setText("0 DTHs");
 
-//        ParseQuery<ParseObject> dthCountQuery = new ParseQuery<>(Constants.DTHEventClassKey);
-//        dthCountQuery.whereEqualTo(Constants.DTHEventCreatedByUserKey, user);
-//        dthCountQuery.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
-//        dthCountQuery.countInBackground(new CountCallback() {
-//            @Override
-//            public void done(int count, ParseException e) {
-//                if (e == null) {
-//                    dthCount.setText(String.valueOf(count) + "DTH" + (count == 1 ? "" : "s"));
-//                }
-//            }
-//        });
-//
-        downCount.setText("0");
-//
-//        ParseQuery<ParseObject> downCountQuery = new ParseQuery<>(Constants.ActivityClassKey);
-//        downCountQuery.whereEqualTo(Constants.ActivityTypeKey, Constants.ActivityTypeInvite);
-//        downCountQuery.whereEqualTo(Constants.ActivityAcceptedKey, true;
-//        downCountQuery.whereEqualTo(Constants.ActivityToUserKey, user);
-//        downCountQuery.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
-//        downCountQuery.countInBackground(new CountCallback() {
-//            @Override
-//            public void done(int count, ParseException e) {
-//                if (e == null) {
-//                    downCount.setText(String.valueOf(count));
-//                }
-//            }
-//        });
+        ParseQuery<ParseObject> dthCountQuery = new ParseQuery<>(Constants.DTHEventClassKey);
+        dthCountQuery.whereEqualTo(Constants.DTHEventCreatedByUserKey, user);
+        dthCountQuery.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
+        dthCountQuery.countInBackground(new CountCallback() {
+            @Override
+            public void done(int count, ParseException e) {
+                if (e == null) {
+                    dthCount.setText(String.valueOf(count) + " DTH" + (count == 1 ? "" : "s"));
+                }
+            }
+        });
+        downCount.setText(String.format(getString(R.string.down_count), 0));
+        notDownCount.setText(String.format(getString(R.string.not_down_count), 0));
 
-        //TODO query and set not down count?
+        ParseQuery<ParseObject> downCountQuery = new ParseQuery<>(Constants.ActivityClassKey);
+        downCountQuery.whereEqualTo(Constants.ActivityTypeKey, Constants.ActivityTypeInvite);
+        downCountQuery.whereEqualTo(Constants.ActivityAcceptedKey, true);
+        downCountQuery.whereEqualTo(Constants.ActivityToUserKey, user);
+        downCountQuery.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
+        downCountQuery.countInBackground(new CountCallback() {
+            @Override
+            public void done(int count, ParseException e) {
+                if (e == null) {
+                    downCount.setText(String.format(getString(R.string.down_count), count));
+                    notDownCount.setText(String.format(getString(R.string.not_down_count), 0));
+                }
+            }
+        });
+
+        contactsInvited.setText(String.format(getString(R.string.contacts_invite_promo), 0)); //FIXME
     }
 }

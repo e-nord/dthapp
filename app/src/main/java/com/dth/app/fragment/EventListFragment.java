@@ -2,7 +2,6 @@ package com.dth.app.fragment;
 
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -164,22 +163,24 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
                 bindView(v, activity);
                 return v;
             }
+
         };
 
         adapter.addOnQueryLoadListener(new ParseQueryAdapter.OnQueryLoadListener<ParseObject>() {
             public void onLoading() {
-                Toast.makeText(getContext(), "Loading!", Toast.LENGTH_SHORT).show();
                 setRefreshing(true);
             }
 
             @Override
             public void onLoaded(List<ParseObject> objects, Exception e) {
-                if (e == null) {
-                    Toast.makeText(getContext(), "Loaded " + objects.size() + " events!", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                if(isAdded()) {
+                    if (objects != null) {
+                        Toast.makeText(getActivity(), "Loaded " + objects.size() + " events!", Toast.LENGTH_LONG).show();
+                    } else if (e != null) {
+                        Toast.makeText(getActivity(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                    setRefreshing(false);
                 }
-                setRefreshing(false);
             }
         });
 
@@ -187,16 +188,5 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         adapter.setPaginationEnabled(true);
         adapter.setObjectsPerPage(20);
         setListAdapter(adapter);
-        setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                view.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        setRefreshing(false);
-                    }
-                }, 5000);
-            }
-        });
     }
 }

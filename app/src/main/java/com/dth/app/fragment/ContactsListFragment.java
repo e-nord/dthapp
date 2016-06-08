@@ -18,28 +18,53 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AlphabetIndexer;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.dth.app.Constants;
 import com.dth.app.R;
+import com.mikhaellopez.circularimageview.CircularImageView;
+import com.orhanobut.hawk.Hawk;
+import com.parse.ParseQuery;
+import com.parse.ParseQueryAdapter;
+import com.parse.ParseUser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import io.branch.invite.util.BranchInviteUtil;
-import io.branch.invite.util.CircularImageView;
 
 public class ContactsListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
-    private ContactsAdapter mAdapter;
-    private OnContactsInteractionListener mOnContactSelectedListener;
+    private ContactsAdapter adapter;
+    private OnContactsInteractionListener onContactSelectedListener;
+    private Set<String> selectedContacts;
 
     public ContactsListFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAdapter = new ContactsAdapter(getActivity());
+        adapter = new ContactsAdapter(getActivity());
+        new ParseQueryAdapter<>(getActivity(), new ParseQueryAdapter.QueryFactory<ParseUser>() {
+            @Override
+            public ParseQuery<ParseUser> create() {
+                ParseQuery<ParseUser> query = ParseUser.getQuery();
+                // Use cached facebook friend ids
+                List<String> facebookFriendIds =  Hawk.get(Constants.UserFacebookFriendsKey);
+
+                // Query for all friends you have on facebook and who are using the app
+                query.whereContainedIn(Constants.UserFacebookIDKey, facebookFriendIds);
+                query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ONLY);
+                query.orderByAscending(Constants.UserDisplayNameKey);
+                return query;
+            }
+        });
+        selectedContacts = new HashSet<>();
         getLoaderManager().initLoader(0, null, this);
     }
 
@@ -49,20 +74,28 @@ public class ContactsListFragment extends ListFragment implements
         getListView().setOnItemClickListener(this);
         getListView().setFastScrollEnabled(true);
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        setListAdapter(mAdapter);
+        setListAdapter(adapter);
     }
 
     public void setOnContactSelectedListener(OnContactsInteractionListener onContactSelectedListener) {
-        mOnContactSelectedListener = onContactSelectedListener;
+        this.onContactSelectedListener = onContactSelectedListener;
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-        Cursor cursor = mAdapter.getCursor();
+        Cursor cursor = adapter.getCursor();
         cursor.moveToPosition(position);
         int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
         String phoneNumber = cursor.getString(phoneNumberIdx);
-        mOnContactSelectedListener.onContactSelected(phoneNumber);
+        onContactSelectedListener.onContactSelected(phoneNumber);
+        if (selectedContacts.contains(phoneNumber)) {
+            selectedContacts.remove(phoneNumber);
+            getListView().setItemChecked(position, false);
+            adapter.notifyDataSetChanged();
+        } else {
+            selectedContacts.add(phoneNumber);
+            getListView().setItemChecked(position, true);
+        }
     }
 
     private static final Uri URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
@@ -101,12 +134,12 @@ public class ContactsListFragment extends ListFragment implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mAdapter.swapCursor(data);
+        adapter.swapCursor(data);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
+        adapter.swapCursor(null);
     }
 
     public interface OnContactsInteractionListener {
@@ -128,6 +161,7 @@ public class ContactsListFragment extends ListFragment implements
             ViewHolder holder = new ViewHolder();
             holder.name = (TextView) itemLayout.findViewById(R.id.contact_list_item_name);
             holder.icon = (CircularImageView) itemLayout.findViewById(R.id.contact_list_item_pic);
+            holder.checkbox = (CheckBox) itemLayout.findViewById(R.id.contact_list_item_check);
             itemLayout.setTag(holder);
             return itemLayout;
         }
@@ -137,7 +171,11 @@ public class ContactsListFragment extends ListFragment implements
             ViewHolder holder = (ViewHolder) view.getTag();
             int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
             String displayName = cursor.getString(nameIdx);
+            int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+            String phoneNumber = cursor.getString(phoneNumberIdx);
             holder.name.setText(displayName);
+            holder.checkbox.setChecked(selectedContacts.contains(phoneNumber));
+            //Picasso.with(context).load();
         }
 
         @Override
@@ -172,7 +210,9 @@ public class ContactsListFragment extends ListFragment implements
 
         private class ViewHolder {
             TextView name;
+            TextView number;
             CircularImageView icon;
+            CheckBox checkbox;
         }
     }
 

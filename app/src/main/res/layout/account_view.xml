@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
@@ -14,35 +13,52 @@
         android:scaleType="fitXY"/>
 
     <LinearLayout
-        android:layout_marginTop="15dp"
         android:id="@+id/account_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
         android:orientation="horizontal"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:weightSum="1.0">
 
-        <TextView
-            android:id="@+id/account_dth_count"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight=".25"
             android:gravity="center"
-            android:orientation="vertical"
-            android:text="0 DTHs"
-            android:textColor="@color/white"
-            android:textSize="18sp"/>
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/ic_dth"/>
+
+            <TextView
+                android:id="@+id/account_dth_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:shadowColor="@color/black"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="1"
+                android:textColor="@color/white"
+                android:textSize="18sp"/>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight=".50"
-            android:orientation="vertical"
-            android:padding="10dp">
+            android:gravity="center"
+            android:orientation="vertical">
 
-            <io.branch.invite.util.CircularImageView
+            <com.mikhaellopez.circularimageview.CircularImageView
                 android:id="@+id/account_profile_pic"
-                android:layout_width="128dp"
-                android:layout_height="128dp"
+                android:layout_width="144dp"
+                android:layout_height="144dp"
                 android:layout_gravity="center"/>
 
             <TextView
@@ -51,9 +67,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
+                android:shadowColor="@color/black"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="1"
                 android:textColor="@color/white"
-                android:textStyle="bold"
-                android:textSize="20sp"/>
+                android:textSize="20sp"
+                android:textStyle="bold"/>
 
         </LinearLayout>
 
@@ -64,15 +84,23 @@
             android:gravity="center"
             android:orientation="vertical">
 
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/ic_down"/>
+
             <TextView
                 android:id="@+id/account_down_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="0 down"
+                android:shadowColor="@color/black"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="1"
                 android:textColor="@color/white"
-                android:textSize="18sp"/>
+                android:textSize="16sp"/>
 
             <TextView
                 android:id="@+id/account_not_down_count"
@@ -80,15 +108,19 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="0 not down"
+                android:shadowColor="@color/black"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="1"
                 android:textColor="@color/white"
-                android:textSize="18sp"/>
+                android:textSize="16sp"/>
 
         </LinearLayout>
 
     </LinearLayout>
 
     <TextView
+        android:id="@+id/account_contacts_invited"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/account_info"
@@ -96,7 +128,10 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="50dp"
         android:gravity="center"
-        android:text="Invited 0 contacts who created a DTH\n10 = stickers\n25 = t-shirt"
+        android:shadowColor="@color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="1"
         android:textColor="@color/white"
         android:textSize="16sp"/>
 

@@ -12,6 +12,7 @@ import com.parse.Parse;
 import com.parse.ParseFacebookUtils;
 
 import io.branch.referral.Branch;
+import timber.log.Timber;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 public class DTHApplication extends Application {
@@ -27,6 +28,7 @@ public class DTHApplication extends Application {
                 handler.uncaughtException(thread, ex);
             }
         });
+        Timber.plant(new Timber.DebugTree());
 //        Fabric.with(this, new Crashlytics());
         Hawk.init(this)
                 .setEncryptionMethod(HawkBuilder.EncryptionMethod.NO_ENCRYPTION)

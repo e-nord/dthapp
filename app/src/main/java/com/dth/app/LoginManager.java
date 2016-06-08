@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import timber.log.Timber;
+
 public enum LoginManager {
     INSTANCE;
 
@@ -43,7 +45,7 @@ public enum LoginManager {
 
     private void getFacebookUser(final Activity activity, final LoginCallback callback) {
         final Bundle profileParameters = new Bundle();
-        profileParameters.putString("fields", "email,name,picture");
+        profileParameters.putString("fields", "email,name,picture.type(large)");
         final Bundle friendsParameters = new Bundle();
         friendsParameters.putString("fields", "id,name,first_name,last_name");
         GraphRequestBatch batch = new GraphRequestBatch(
@@ -78,13 +80,16 @@ public enum LoginManager {
                         try {
                             String email = response.getJSONObject().getString("email");
                             String name = response.getJSONObject().getString("name");
+                            String id = response.getJSONObject().getString("id");
                             JSONObject picture = response.getJSONObject().getJSONObject("picture");
                             JSONObject data = picture.getJSONObject("data");
                             final String pictureUrl = data.getString("url");
+                            System.out.println(pictureUrl);
 
                             final ParseUser parseUser = ParseUser.getCurrentUser();
                             parseUser.setUsername(name);
                             parseUser.setEmail(email);
+                            parseUser.put(Constants.UserFacebookIDKey, id);
 
                             Picasso.with(activity).load(pictureUrl).into(new Target() {
                                 @Override
@@ -92,16 +97,16 @@ public enum LoginManager {
                                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
                                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                                    byte[] smallPicBytes = stream.toByteArray();
-                                    ParseFile smallPicFile = new ParseFile(smallPicBytes);
-                                    parseUser.put(Constants.UserProfilePicSmallKey, smallPicFile);
+                                    byte[] mediumPicBytes = stream.toByteArray();
+                                    ParseFile mediumPicFile = new ParseFile(mediumPicBytes);
+                                    parseUser.put(Constants.UserProfilePicMediumKey, mediumPicFile);
 
                                     stream.reset();
 
                                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                                    byte[] mediumPicBytes = stream.toByteArray();
-                                    ParseFile mediumPicFile = new ParseFile(mediumPicBytes);
-                                    parseUser.put(Constants.UserProfilePicMediumKey, mediumPicFile);
+                                    byte[] smallPicBytes = stream.toByteArray();
+                                    ParseFile smallPicFile = new ParseFile(smallPicBytes);
+                                    parseUser.put(Constants.UserProfilePicSmallKey, smallPicFile);
 
                                     parseUser.saveInBackground(new SaveCallback() {
                                         @Override
@@ -122,7 +127,7 @@ public enum LoginManager {
 
                                 @Override
                                 public void onPrepareLoad(Drawable placeHolderDrawable) {
-
+                                    Timber.d("Fetching profile images...");
                                 }
                             });
 
@@ -132,6 +137,7 @@ public enum LoginManager {
                         }
                     }
                 }));
+        Timber.d("Requesting Facebook info...");
         batch.executeAsync();
     }
 
@@ -140,6 +146,7 @@ public enum LoginManager {
     }
 
     public void login(final Activity activity, final LoginCallback callback) {
+        Timber.d("Starting login...");
         ParseFacebookUtils.logInWithReadPermissionsInBackground(activity, PERMISSIONS, new LogInCallback() {
             @Override
             public void done(ParseUser user, ParseException err) {
@@ -167,6 +174,15 @@ public enum LoginManager {
                 }
             }
         });
+        Hawk.put("first_login", false);
+    }
+
+    public boolean isFirstLogin() {
+        return Hawk.get("first_login",  true);
+    }
+
+    public void setFirstLogin() {
+        Hawk.put("first_login",  false);
     }
 
     public interface LoginCallback {

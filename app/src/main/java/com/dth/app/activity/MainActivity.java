@@ -17,7 +17,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -27,7 +26,6 @@ import com.dth.app.fragment.AccountFragment;
 import com.dth.app.fragment.EventCreateFragment;
 import com.dth.app.fragment.EventInviteFragment;
 import com.dth.app.fragment.HomeFragment;
-import com.dth.app.fragment.IntroFragment;
 import com.dth.app.fragment.NearbyFragment;
 import com.facebook.appevents.AppEventsLogger;
 import com.mikepenz.aboutlibraries.Libs;
@@ -39,6 +37,7 @@ import com.roughike.bottombar.BottomBarTab;
 import com.roughike.bottombar.OnTabClickListener;
 
 import de.cketti.mailto.EmailIntentBuilder;
+import timber.log.Timber;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
@@ -60,10 +59,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (LoginManager.INSTANCE.isUserLoggedIn()) {
-            IntroFragment introFragment = IntroFragment.newInstance();
-            showFragment(introFragment);
-        } else {
+        if (!LoginManager.INSTANCE.isUserLoggedIn()) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
@@ -79,10 +75,6 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //Picasso.with(this).load(LoginManager.INSTANCE.getUser().getPictureUrl()).fetch();
-
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(getSupportFragmentManager().getBackStackEntryCount() > 0);
@@ -94,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         createFragment = EventCreateFragment.newInstance();
-        accountFragment = AccountFragment.newInstance(ParseUser.getCurrentUser());
+        accountFragment = AccountFragment.newInstance();
         nearbyFragment = NearbyFragment.newInstance();
         homeFragment = HomeFragment.newInstance();
         inviteFragment = EventInviteFragment.newInstance();
@@ -104,47 +96,59 @@ public class MainActivity extends AppCompatActivity {
         bottomBar.noTabletGoodness();
 
         BottomBarTab meTab = new BottomBarTab(R.drawable.ic_person_24dp, "Me");
-        BottomBarTab dthTab = new BottomBarTab(R.drawable.ic_dth, "DTH");
+        BottomBarTab dthTab = new BottomBarTab(R.mipmap.ic_launcher, "DTH");
         BottomBarTab nearbyTab = new BottomBarTab(R.drawable.ic_group_24dp, "Nearby");
         bottomBar.setItems(meTab, dthTab, nearbyTab);
 
         ViewGroup container = (ViewGroup) bottomBar.findViewById(R.id.bb_bottom_bar_item_container);
+        container.getChildAt(0).getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
         View dthButton = container.getChildAt(1);
         dthButton.findViewById(R.id.bb_bottom_bar_title).setVisibility(View.GONE);
         final ImageView dthIcon = (ImageView) dthButton.findViewById(R.id.bb_bottom_bar_icon);
         dthIcon.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
         dthIcon.setColorFilter(null);
+        container.getChildAt(2).getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
 
         bottomBar.setOnTabClickListener(new OnTabClickListener() {
             @Override
             public void onTabSelected(int position) {
-                if (position == 0) {
-                    showFragment(homeFragment);
-                } else if (position == 1) {
-                    showFragment(createFragment);
-                } else if (position == 2) {
-                    showFragment(nearbyFragment);
+                if(!LoginManager.INSTANCE.isFirstLogin()) {
+                    if (position == 0) {
+                        showFragment(homeFragment);
+                    } else if (position == 1) {
+                        showFragment(createFragment);
+                    } else if (position == 2) {
+                        showFragment(nearbyFragment);
+                    }
+                    dthIcon.setColorFilter(null);
                 }
-                dthIcon.setColorFilter(null);
             }
 
             @Override
             public void onTabReSelected(int position) {
-                if (position == 0) {
-                    showFragment(homeFragment);
-                } else if (position == 1) {
-                    showFragment(createFragment);
-                } else if (position == 2) {
-                    showFragment(nearbyFragment);
+                if(!LoginManager.INSTANCE.isFirstLogin()) {
+                    if (position == 0) {
+                        showFragment(homeFragment);
+                    } else if (position == 1) {
+                        showFragment(createFragment);
+                    } else if (position == 2) {
+                        showFragment(nearbyFragment);
+                    }
+                    dthIcon.setColorFilter(null);
                 }
-                dthIcon.setColorFilter(null);
             }
-
         });
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 5);
         }
+
+        //FIXME
+//        if (LoginManager.INSTANCE.isFirstLogin()) {
+//            LoginManager.INSTANCE.setFirstLogin();
+//            IntroFragment introFragment = IntroFragment.newInstance();
+//            showFragment(introFragment);
+//        }
     }
 
     @Override
@@ -201,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_account) {
-            showFragment(accountFragment, "account");
+            displayUserAccount(ParseUser.getCurrentUser());
             return true;
         } else if (item.getItemId() == R.id.action_feedback) {
             launchFeedback(this);
@@ -213,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
                     .withLicenseShown(true)
                     .withFields(R.string.class.getFields())
                     .start(this);
+            return true;
         } else if (item.getItemId() == R.id.action_logout) {
             LoginManager.INSTANCE.logout(new LoginManager.LogoutCallback() {
                 @Override
@@ -223,7 +228,8 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(MainActivity.this, "Logout failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Timber.e(e, "Login error");
+                    Toast.makeText(MainActivity.this, "Logout failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     //TODO handle error
                 }
             });
@@ -236,6 +242,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         ParseFacebookUtils.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public void displayUserAccount(ParseUser user){
+        accountFragment.setUser(ParseUser.getCurrentUser());
+        showFragment(accountFragment, "account");
     }
 
 }

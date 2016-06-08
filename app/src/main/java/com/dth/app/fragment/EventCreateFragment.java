@@ -1,11 +1,8 @@
 package com.dth.app.fragment;
 
 import android.app.AlarmManager;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.TextInputEditText;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.AppCompatSpinner;
 import android.text.Editable;
@@ -15,17 +12,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.dth.app.R;
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+
+import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent;
+import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEventListener;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import io.branch.invite.TabbedInviteBuilder;
 
 public class EventCreateFragment extends Fragment {
 
@@ -34,15 +37,16 @@ public class EventCreateFragment extends Fragment {
     @Bind(R.id.dt_create_title)
     TextView title;
     @Bind(R.id.dt_create_edit)
-    TextInputEditText edit;
+    EditText edit;
     @Bind(R.id.dt_create_next_button)
     Button next;
+    @Bind(R.id.dt_create_suggestions_container)
+    ViewGroup suggestionsContainer;
 
     public static EventCreateFragment newInstance() {
         return new EventCreateFragment();
     }
 
-    @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dt_create_view, container, false);
@@ -50,9 +54,36 @@ public class EventCreateFragment extends Fragment {
         return view;
     }
 
+    public void getDefaultSuggestions(){
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Defaults");
+        query.whereEqualTo("type", "defaultDT");
+        query.orderByAscending("order");
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if(objects != null){
+
+                } else if(e != null){
+
+                }
+            }
+        });
+    }
+
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        KeyboardVisibilityEvent.setEventListener(getActivity(), new KeyboardVisibilityEventListener() {
+            @Override
+            public void onVisibilityChanged(boolean isOpen) {
+                if(isOpen){
+                    suggestionsContainer.setVisibility(View.VISIBLE);
+                } else {
+                    suggestionsContainer.setVisibility(View.GONE);
+                }
+            }
+        });
 
         String text = edit.getText().toString();
         updateTitle(text);
@@ -61,7 +92,6 @@ public class EventCreateFragment extends Fragment {
         edit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
             }
 
             @Override
@@ -72,34 +102,20 @@ public class EventCreateFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-
             }
         });
 
         List<TimePeriod> items = new LinkedList<>();
-        items.add(new TimePeriod("15 minutes", AlarmManager.INTERVAL_HOUR/4));
+        items.add(new TimePeriod("15 minutes", AlarmManager.INTERVAL_HOUR / 4));
         items.add(new TimePeriod("1 hour", AlarmManager.INTERVAL_HOUR));
-        items.add(new TimePeriod("3 hours", AlarmManager.INTERVAL_HOUR*3));
+        items.add(new TimePeriod("3 hours", AlarmManager.INTERVAL_HOUR * 3));
         items.add(new TimePeriod("1 day", AlarmManager.INTERVAL_DAY));
-        items.add(new TimePeriod("5 days", AlarmManager.INTERVAL_DAY*5));
+        items.add(new TimePeriod("5 days", AlarmManager.INTERVAL_DAY * 5));
         spinner.setAdapter(new ArrayAdapter<>(getActivity(), R.layout.spinner_item, R.id.spinner_text, items));
 
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new TabbedInviteBuilder(getActivity(), "Inviting userID", "Inviting user Name")
-                        .setPhoneTabText(R.string.contacts)
-                        //.setTabStyle(getActivity().getResources().getDrawable(R.drawable.tab_on), getActivity().getResources().getDrawable(R.drawable.tab_off))
-                        .setPositiveButtonStyle(new ColorDrawable(Color.TRANSPARENT),"Invite", Color.BLUE)
-                        .setNegativeButtonStyle(new ColorDrawable(Color.TRANSPARENT),"Close", Color.MAGENTA)
-                        .setInviterImageUrl("https://s3-us-west-1.amazonaws.com/branchhost/mosaic_og.png")
-                        .setInvitationText("Invitation Title", "Invitation Message")
-                        .setPhoneTabText("Message")
-                        .setEmailTabText("E-mail")
-                        //.setTitle("Invite a friend")
-                        .setSelectedItemColor(Color.parseColor("#FF0000FF"))
-                        .addCustomParams("Custom_Param", "This is a custom param")
-                        .create().show();
                 getActivity().getSupportFragmentManager().
                         beginTransaction().
                         setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right).
@@ -108,6 +124,22 @@ public class EventCreateFragment extends Fragment {
                         commit();
             }
         });
+    }
+
+    private void updateButton(String input) {
+        next.setVisibility(input.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void updateTitle(String input) {
+        String firstChar;
+        if (input.isEmpty()) {
+            firstChar = "";
+        } else {
+            int codepoint = input.codePointAt(0);
+            char[] ch = Character.toChars(codepoint);
+            firstChar = new String(ch).toUpperCase();
+        }
+        title.setText(String.format(getString(R.string.DT), firstChar));
     }
 
     private class TimePeriod {
@@ -133,18 +165,4 @@ public class EventCreateFragment extends Fragment {
         }
     }
 
-    private void updateButton(String input){
-        next.setVisibility(input.isEmpty() ? View.INVISIBLE : View.VISIBLE);
-    }
-
-    private void updateTitle(String input) {
-        String firstChar;
-        if (input.isEmpty()) {
-            firstChar = "_";
-
-        } else {
-            firstChar = String.valueOf(input.charAt(0));
-        }
-        title.setText(String.format(getString(R.string.DT), firstChar.toUpperCase(Locale.getDefault())));
-    }
 }

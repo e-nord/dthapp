@@ -9,11 +9,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.dth.app.LoginManager;
 import com.dth.app.R;
 import com.parse.ParseFacebookUtils;
 import com.parse.ParseUser;
 
+import timber.log.Timber;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class LoginActivity extends AppCompatActivity {
@@ -42,7 +44,13 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(Exception e) {
+                        Timber.e(e, "Login error");
                         Toast.makeText(LoginActivity.this, "Login failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        new MaterialDialog.Builder(getApplication())
+                                .title(R.string.login_error)
+                                .content(R.string.connection_error)
+                                .neutralText(R.string.ok)
+                                .show();
                     }
                 });
             }
