@@ -20,6 +20,20 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private boolean isResumed;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isResumed = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isResumed = false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,13 +58,15 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(Exception e) {
-                        Timber.e(e, "Login error");
-                        Toast.makeText(LoginActivity.this, "Login failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        new MaterialDialog.Builder(getApplication())
-                                .title(R.string.login_error)
-                                .content(R.string.connection_error)
-                                .neutralText(R.string.ok)
-                                .show();
+                        if(isResumed) {
+                            Timber.e(e, "Login error");
+                            Toast.makeText(LoginActivity.this, "Login failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            new MaterialDialog.Builder(getApplication())
+                                    .title(R.string.login_error)
+                                    .content(R.string.connection_error)
+                                    .neutralText(R.string.ok)
+                                    .show();
+                        }
                     }
                 });
             }

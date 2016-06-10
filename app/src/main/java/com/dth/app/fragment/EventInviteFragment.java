@@ -39,18 +39,18 @@ public class EventInviteFragment extends Fragment {
         ContactsFragmentPagerAdapter adapter = new ContactsFragmentPagerAdapter(getChildFragmentManager());
         View view = inflater.inflate(R.layout.contacts_view, container, false);
 
-        mContactsList = new ContactsListFragment();
-        mContactsList.setOnContactSelectedListener(new ContactsListFragment.OnContactsInteractionListener() {
+        mContactsList = PhoneContactListFragment.newInstance();
+        mContactsList.setOnContactSelectedListener(new ContactsListFragment.OnContactSelectedListener() {
             @Override
-            public void onContactSelected(String phoneNumber) {
-                Toast.makeText(getActivity(), "Selected contact - " + phoneNumber, Toast.LENGTH_SHORT).show();
+            public void onContactSelected(ContactsListFragment.Contact contact) {
+                Toast.makeText(getActivity(), "Selected contact - " + contact, Toast.LENGTH_SHORT).show();
             }
         });
-        mFriendsList = new ContactsListFragment();
-        mFriendsList.setOnContactSelectedListener(new ContactsListFragment.OnContactsInteractionListener() {
+        mFriendsList = FriendsListFragment.newInstance();
+        mFriendsList.setOnContactSelectedListener(new ContactsListFragment.OnContactSelectedListener() {
             @Override
-            public void onContactSelected(String phoneNumber) {
-                Toast.makeText(getActivity(), "Selected contact - " + phoneNumber, Toast.LENGTH_SHORT).show();
+            public void onContactSelected(ContactsListFragment.Contact contact) {
+                Toast.makeText(getActivity(), "Selected contact - " + contact, Toast.LENGTH_SHORT).show();
             }
         });
         adapter.addFragment(mFriendsList, getActivity().getString(R.string.friends));

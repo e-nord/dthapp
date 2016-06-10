@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
         //FIXME
 //        if (LoginManager.INSTANCE.isFirstLogin()) {
-//            LoginManager.INSTANCE.setFirstLogin();
+//            LoginManager.INSTANCE.resetFirstLogin();
 //            IntroFragment introFragment = IntroFragment.newInstance();
 //            showFragment(introFragment);
 //        }

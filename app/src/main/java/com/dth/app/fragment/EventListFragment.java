@@ -3,7 +3,6 @@ package com.dth.app.fragment;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -13,6 +12,7 @@ import android.widget.Toast;
 
 import com.dth.app.Constants;
 import com.dth.app.R;
+import com.dth.app.Utils;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
@@ -22,31 +22,10 @@ import com.parse.ParseUser;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public abstract class EventListFragment extends SwipeRefreshListFragment {
 
     private ParseQueryAdapter<ParseObject> adapter;
-
-    public static String getTimeRemainingString(long timeLeftMs) {
-        long days = TimeUnit.MILLISECONDS.toDays(timeLeftMs);
-        timeLeftMs -= TimeUnit.DAYS.toMillis(days);
-        long hours = TimeUnit.MILLISECONDS.toHours(timeLeftMs);
-        timeLeftMs -= TimeUnit.HOURS.toMillis(hours);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeLeftMs);
-        timeLeftMs -= TimeUnit.MINUTES.toMillis(minutes);
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(timeLeftMs);
-        if (days > 0) {
-            return days + " days";
-        }
-        if (hours > 0) {
-            return hours + " hours";
-        }
-        if (minutes > 0) {
-            return minutes + " minutes";
-        }
-        return seconds + " seconds";
-    }
 
     public abstract ParseQuery<ParseObject> getQuery();
 
@@ -118,7 +97,7 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
                 textColor = color;
                 status.setText(R.string.down);
             } else {
-                String timeLeft = getTimeRemainingString(timeLeftMs);
+                String timeLeft = Utils.timeMillisToString(timeLeftMs);
                 status.setText(timeLeft + " left");
                 textColor = getResources().getColor(R.color.black);
                 color = getResources().getColor(R.color.white);
@@ -153,15 +132,12 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
                 };
 
         // Pass the factory into the ParseQueryAdapter's constructor.
-        adapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory) {
+        adapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory, R.layout.dt_list_item) {
             @Override
             public View getItemView(ParseObject activity, View v, ViewGroup parent) {
-                if (v == null) {
-                    v = LayoutInflater.from(getContext()).inflate(R.layout.dt_list_item, parent, false);
-                }
-                super.getItemView(activity, v, parent);
-                bindView(v, activity);
-                return v;
+                View view = super.getItemView(activity, v, parent);
+                bindView(view, activity);
+                return view;
             }
 
         };
