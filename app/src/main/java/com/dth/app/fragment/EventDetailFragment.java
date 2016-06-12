@@ -13,6 +13,7 @@ import android.widget.Toast;
 import com.dth.app.Constants;
 import com.dth.app.R;
 import com.dth.app.Utils;
+import com.mikhaellopez.circularimageview.CircularImageView;
 import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.ParseException;
@@ -27,7 +28,6 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.branch.invite.util.CircularImageView;
 
 public class EventDetailFragment extends Fragment {
 
@@ -102,43 +102,52 @@ public class EventDetailFragment extends Fragment {
         Toast.makeText(getActivity(), "Not down", Toast.LENGTH_SHORT).show();
     }
 
-    public void setEvent(final ParseObject event) {
-        this.event = event;
+    @Override
+    public void onResume() {
+        super.onResume();
         event.fetchIfNeededInBackground(new GetCallback<ParseObject>() {
             @Override
-            public void done(ParseObject object, ParseException e) {
-                ParseQuery<ParseObject> guestListQuery = getGuestListQuery(object, true);
-                guestListQuery.findInBackground(new FindCallback<ParseObject>() {
-                    @Override
-                    public void done(List<ParseObject> objects, ParseException e) {
-                        LayoutInflater inflater = LayoutInflater.from(getContext());
-                        for (ParseObject invite : objects) {
-                            CircularImageView guestProfileIcon = (CircularImageView) inflater.inflate(R.layout.dt_detail_contact_view, guestsContainer, false);
-                            ParseUser guest = (ParseUser) invite.get(Constants.ActivityToUserKey);
-                            ParseFile file = guest.getParseFile(Constants.UserProfilePicSmallKey);
-                            guestsContainer.addView(guestProfileIcon);
-                            Picasso.with(getContext()).
-                                    load(file.getUrl()).
-                                    placeholder(R.drawable.ic_person_24dp).
-                                    error(R.drawable.ic_person_24dp).
-                                    into(guestProfileIcon);
-                        }
-                    }
-                });
+            public void done(ParseObject event, ParseException e) {
+                displayEvent(event);
+            }
+        });
+    }
 
-                String eventDescription = object.getString(Constants.DTHEventDescriptionKey);
-                // Replace occurances of \n with a line break
-                eventDescription = eventDescription.replaceAll("\\n", "\n");
-                description.setText(eventDescription);
-                long now = System.currentTimeMillis();
-                long expirationTime = event.getLong(Constants.ActivityExpirationKey);
-                long timeLeftMs = expirationTime - now;
-                if(timeLeftMs > 0){
-                    finishIn.setText(String.format(getString(R.string.finishes_in), Utils.timeMillisToString(timeLeftMs)));
-                } else {
-                    finishIn.setText(getString(R.string.finished));
+    private void displayEvent(ParseObject event){
+        ParseQuery<ParseObject> guestListQuery = getGuestListQuery(event, true);
+        guestListQuery.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                LayoutInflater inflater = LayoutInflater.from(getContext());
+                for (ParseObject invite : objects) {
+                    CircularImageView guestProfileIcon = (CircularImageView) inflater.inflate(R.layout.dt_detail_contact_view, guestsContainer, false);
+                    ParseUser guest = (ParseUser) invite.get(Constants.ActivityToUserKey);
+                    ParseFile file = guest.getParseFile(Constants.UserProfilePicSmallKey);
+                    guestsContainer.addView(guestProfileIcon);
+                    Picasso.with(getContext()).
+                            load(file.getUrl()).
+                            placeholder(R.drawable.ic_person_24dp).
+                            error(R.drawable.ic_person_24dp).
+                            into(guestProfileIcon);
                 }
             }
         });
+
+        String eventDescription = event.getString(Constants.DTHEventDescriptionKey);
+        // Replace occurances of \n with a line break
+        eventDescription = eventDescription.replaceAll("\\n", "\n");
+        description.setText(eventDescription);
+        long now = System.currentTimeMillis();
+        long expirationTime = event.getLong(Constants.ActivityExpirationKey);
+        long timeLeftMs = expirationTime - now;
+        if(timeLeftMs > 0){
+            finishIn.setText(String.format(getString(R.string.finishes_in), Utils.timeMillisToString(timeLeftMs)));
+        } else {
+            finishIn.setText(getString(R.string.finished));
+        }
+    }
+
+    public void setEvent(final ParseObject event) {
+        this.event = event;
     }
 }

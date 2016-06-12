@@ -24,13 +24,16 @@ import com.dth.app.LoginManager;
 import com.dth.app.R;
 import com.dth.app.fragment.AccountFragment;
 import com.dth.app.fragment.EventCreateFragment;
+import com.dth.app.fragment.EventDetailFragment;
 import com.dth.app.fragment.EventInviteFragment;
+import com.dth.app.fragment.EventListFragment;
 import com.dth.app.fragment.HomeFragment;
 import com.dth.app.fragment.NearbyFragment;
 import com.facebook.appevents.AppEventsLogger;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.parse.ParseFacebookUtils;
+import com.parse.ParseObject;
 import com.parse.ParseUser;
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.BottomBarTab;
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     private EventCreateFragment createFragment;
     private EventInviteFragment inviteFragment;
+    private EventDetailFragment detailFragment;
     private HomeFragment homeFragment;
     private NearbyFragment nearbyFragment;
     private AccountFragment accountFragment;
@@ -90,6 +94,14 @@ public class MainActivity extends AppCompatActivity {
         nearbyFragment = NearbyFragment.newInstance();
         homeFragment = HomeFragment.newInstance();
         inviteFragment = EventInviteFragment.newInstance();
+        detailFragment = EventDetailFragment.newInstance();
+        homeFragment.setOnEventSelectedListener(new EventListFragment.OnEventSelectedListener() {
+            @Override
+            public void onEventSelected(ParseObject event) {
+                detailFragment.setEvent(event);
+                showFragment(detailFragment, "detail", true);
+            }
+        });
 
         bottomBar = BottomBar.attach(this, savedInstanceState);
         bottomBar.noNavBarGoodness();
@@ -186,16 +198,24 @@ public class MainActivity extends AppCompatActivity {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
     }
 
-    private void showFragment(Fragment fragment, String tag) {
+    private void showFragment(Fragment fragment, String tag, boolean slideInFromRight) {
         if (!fragment.isVisible()) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.setCustomAnimations(R.anim.slide_in_up, 0, 0, R.anim.slide_out_down);
+            if(slideInFromRight){
+                transaction.setCustomAnimations(R.anim.slide_in_right, 0, 0, R.anim.slide_out_right);
+            } else {
+                transaction.setCustomAnimations(R.anim.slide_in_up, 0, 0, R.anim.slide_out_down);
+            }
             transaction.replace(R.id.content_main, fragment);
             if (tag != null) {
                 transaction.addToBackStack(tag);
             }
             transaction.commit();
         }
+    }
+
+    private void showFragment(Fragment fragment, String tag) {
+        showFragment(fragment, tag, false);
     }
 
     private void showFragment(Fragment fragment) {
@@ -245,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void displayUserAccount(ParseUser user){
-        accountFragment.setUser(ParseUser.getCurrentUser());
+        accountFragment.setUser(user);
         showFragment(accountFragment, "account");
     }
 

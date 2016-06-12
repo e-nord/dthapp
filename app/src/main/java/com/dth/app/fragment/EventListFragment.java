@@ -13,7 +13,6 @@ import android.widget.Toast;
 import com.dth.app.Constants;
 import com.dth.app.R;
 import com.dth.app.Utils;
-import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
@@ -26,6 +25,7 @@ import java.util.List;
 public abstract class EventListFragment extends SwipeRefreshListFragment {
 
     private ParseQueryAdapter<ParseObject> adapter;
+    private OnEventSelectedListener listener;
 
     public abstract ParseQuery<ParseObject> getQuery();
 
@@ -47,11 +47,6 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         String currentUserDisplayName = ParseUser.getCurrentUser().getString(Constants.UserDisplayNameKey);
         ParseUser activityUser = (ParseUser) activity.get(Constants.ActivityFromUserKey);
         String activityName = activity.getString(Constants.ActivityDTKey);
-        try {
-            activityUser.fetchIfNeeded();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
         String activityUserDisplayName = activityUser.getString(Constants.UserDisplayNameKey);
 
         String activityDisplayName = "DTH"; //FIXME
@@ -86,7 +81,7 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         long now = System.currentTimeMillis();
         long lifetimeSeconds = activity.getLong(Constants.DTHEventLifetimeKey) * 60;
         long finishTime = activity.getCreatedAt().getTime() + lifetimeSeconds;
-        long timeLeftMs = finishTime - now;
+        long timeLeftMs = now - finishTime;
         if (timeLeftMs <= 0) {
             status.setText(R.string.finished);
             color = getResources().getColor(R.color.colorLightAccent);
@@ -108,6 +103,14 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         statusColor.setBackgroundColor(color);
     }
 
+    public interface OnEventSelectedListener {
+        void onEventSelected(ParseObject event);
+    }
+
+    public void setOnEventSelectedListener(OnEventSelectedListener listener) {
+        this.listener = listener;
+    }
+
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -116,12 +119,8 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                getActivity().getSupportFragmentManager().
-                        beginTransaction().
-                        setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right).
-                        addToBackStack("detail").
-                        replace(R.id.content_main, EventDetailFragment.newInstance()).
-                        commit();
+                ParseObject activity = (ParseObject) parent.getItemAtPosition(position);
+                listener.onEventSelected(activity.getParseObject(Constants.ActivityEventKey));
             }
         });
         ParseQueryAdapter.QueryFactory<ParseObject> factory =

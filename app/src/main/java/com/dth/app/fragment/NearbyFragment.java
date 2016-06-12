@@ -125,7 +125,7 @@ public class NearbyFragment extends EventListFragment {
             //masterQuery.include(Constants.ActivityFromUserKey);
             masterQuery.include(Constants.ActivityReferringUserKey);
             masterQuery.include(Constants.ActivityEventKey);
-            masterQuery.include(Constants.ActivityFromUserKey + "." + Constants.UserDisplayNameKey);
+            masterQuery.include(Constants.ActivityFromUserKey);
 
             // Do not show deleted events
             masterQuery.whereNotEqualTo(Constants.ActivityDeletedKey, true);
