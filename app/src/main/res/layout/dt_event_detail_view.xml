@@ -5,25 +5,13 @@
                 android:background="@color/background"
                 android:orientation="vertical">
 
-    <HorizontalScrollView
+    <it.sephiroth.android.library.widget.HListView
+        android:id="@+id/dt_event_detail_guest_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/dt_detail_contacts_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:scrollbars="none">
-
-        </LinearLayout>
-
-    </HorizontalScrollView>
+        android:layout_height="wrap_content"/>
 
     <TextView
-        android:id="@+id/dt_detail_description"
+        android:id="@+id/dt_event_detail_description"
         style="@style/feature_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,11 +21,11 @@
         android:paddingRight="40dp"/>
 
     <TextView
-        android:id="@+id/dt_detail_finish_in"
+        android:id="@+id/dt_event_detail_finish_in"
         style="@style/detail_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/dt_detail_description"
+        android:layout_below="@id/dt_event_detail_description"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
         android:gravity="center"/>
@@ -50,7 +38,7 @@
         android:weightSum="1.0">
 
         <Button
-            android:id="@+id/down_button"
+            android:id="@+id/dt_event_detail_down_button"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -62,7 +50,7 @@
             android:textSize="18sp"/>
 
         <Button
-            android:id="@+id/not_down_button"
+            android:id="@+id/dt_event_detail_not_down_button"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight=".5"

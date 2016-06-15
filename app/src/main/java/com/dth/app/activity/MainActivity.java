@@ -30,6 +30,7 @@ import com.dth.app.fragment.EventListFragment;
 import com.dth.app.fragment.HomeFragment;
 import com.dth.app.fragment.NearbyFragment;
 import com.facebook.appevents.AppEventsLogger;
+import com.joanfuentes.hintcase.HintCase;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.parse.ParseFacebookUtils;
@@ -89,20 +90,33 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        createFragment = EventCreateFragment.newInstance();
-        accountFragment = AccountFragment.newInstance();
-        nearbyFragment = NearbyFragment.newInstance();
-        homeFragment = HomeFragment.newInstance();
-        inviteFragment = EventInviteFragment.newInstance();
-        detailFragment = EventDetailFragment.newInstance();
-        homeFragment.setOnEventSelectedListener(new EventListFragment.OnEventSelectedListener() {
+        EventListFragment.OnEventSelectedListener eventListener = new EventListFragment.OnEventSelectedListener() {
             @Override
             public void onEventSelected(ParseObject event) {
                 detailFragment.setEvent(event);
                 showFragment(detailFragment, "detail", true);
             }
-        });
+        };
 
+        EventListFragment.OnUserSelectedListener userListener = new EventListFragment.OnUserSelectedListener() {
+            @Override
+            public void onUserSelected(ParseUser user) {
+                accountFragment.setUser(user);
+                showFragment(accountFragment, "account", true);
+            }
+        };
+
+        inviteFragment = EventInviteFragment.newInstance();
+        detailFragment = EventDetailFragment.newInstance();
+        detailFragment.setOnUserSelectedListener(userListener);
+        createFragment = EventCreateFragment.newInstance();
+        accountFragment = AccountFragment.newInstance();
+        nearbyFragment = NearbyFragment.newInstance();
+        nearbyFragment.setOnEventSelectedListener(eventListener);
+        nearbyFragment.setOnUserSelectedListener(userListener);
+        homeFragment = HomeFragment.newInstance();
+        homeFragment.setOnEventSelectedListener(eventListener);
+        homeFragment.setOnUserSelectedListener(userListener);
         bottomBar = BottomBar.attach(this, savedInstanceState);
         bottomBar.noNavBarGoodness();
         bottomBar.noTabletGoodness();
@@ -124,30 +138,26 @@ public class MainActivity extends AppCompatActivity {
         bottomBar.setOnTabClickListener(new OnTabClickListener() {
             @Override
             public void onTabSelected(int position) {
-                if(!LoginManager.INSTANCE.isFirstLogin()) {
-                    if (position == 0) {
-                        showFragment(homeFragment);
-                    } else if (position == 1) {
-                        showFragment(createFragment);
-                    } else if (position == 2) {
-                        showFragment(nearbyFragment);
-                    }
-                    dthIcon.setColorFilter(null);
+                if (position == 0) {
+                    showFragment(homeFragment);
+                } else if (position == 1) {
+                    showFragment(createFragment);
+                } else if (position == 2) {
+                    showFragment(nearbyFragment);
                 }
+                dthIcon.setColorFilter(null);
             }
 
             @Override
             public void onTabReSelected(int position) {
-                if(!LoginManager.INSTANCE.isFirstLogin()) {
-                    if (position == 0) {
-                        showFragment(homeFragment);
-                    } else if (position == 1) {
-                        showFragment(createFragment);
-                    } else if (position == 2) {
-                        showFragment(nearbyFragment);
-                    }
-                    dthIcon.setColorFilter(null);
+                if (position == 0) {
+                    showFragment(homeFragment);
+                } else if (position == 1) {
+                    showFragment(createFragment);
+                } else if (position == 2) {
+                    showFragment(nearbyFragment);
                 }
+                dthIcon.setColorFilter(null);
             }
         });
 
@@ -155,12 +165,9 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 5);
         }
 
-        //FIXME
-//        if (LoginManager.INSTANCE.isFirstLogin()) {
-//            LoginManager.INSTANCE.resetFirstLogin();
-//            IntroFragment introFragment = IntroFragment.newInstance();
-//            showFragment(introFragment);
-//        }
+        if (LoginManager.INSTANCE.isFirstLogin()) {
+            new HintCase(getWindow().getDecorView()).setTarget(dthIcon, true).show();
+        }
     }
 
     @Override

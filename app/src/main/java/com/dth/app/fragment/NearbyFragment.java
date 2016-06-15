@@ -122,16 +122,17 @@ public class NearbyFragment extends EventListFragment {
 
             // Things to include
             masterQuery.include(Constants.ActivityToUserKey);
-            //masterQuery.include(Constants.ActivityFromUserKey);
+            masterQuery.include(Constants.ActivityFromUserKey);
             masterQuery.include(Constants.ActivityReferringUserKey);
             masterQuery.include(Constants.ActivityEventKey);
-            masterQuery.include(Constants.ActivityFromUserKey);
 
             // Do not show deleted events
             masterQuery.whereNotEqualTo(Constants.ActivityDeletedKey, true);
 
             masterQuery.orderByDescending("createdAt");
-            masterQuery.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ONLY);
+            masterQuery.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE);
+
+            return masterQuery;
         }
 
         return query;

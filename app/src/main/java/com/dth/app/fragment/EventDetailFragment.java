@@ -1,12 +1,14 @@
 package com.dth.app.fragment;
 
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +30,8 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import it.sephiroth.android.library.widget.AdapterView;
+import it.sephiroth.android.library.widget.HListView;
 
 public class EventDetailFragment extends Fragment {
 
@@ -37,19 +41,21 @@ public class EventDetailFragment extends Fragment {
 
     private ParseObject event;
 
-    @Bind(R.id.dt_detail_finish_in)
+    private EventListFragment.OnUserSelectedListener listener;
+
+    @Bind(R.id.dt_event_detail_finish_in)
     TextView finishIn;
 
-    @Bind(R.id.dt_detail_description)
+    @Bind(R.id.dt_event_detail_description)
     TextView description;
 
-    @Bind(R.id.dt_detail_contacts_container)
-    LinearLayout guestsContainer;
+    @Bind(R.id.dt_event_detail_guest_list)
+    HListView guestsList;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dt_detail_view, container, false);
+        View view = inflater.inflate(R.layout.dt_event_detail_view, container, false);
         ButterKnife.bind(this, view);
         return view;
     }
@@ -92,12 +98,12 @@ public class EventDetailFragment extends Fragment {
         return guestListQuery;
     }
 
-    @OnClick(R.id.down_button)
+    @OnClick(R.id.dt_event_detail_down_button)
     public void onDown(){
         Toast.makeText(getActivity(), "Down", Toast.LENGTH_SHORT).show();
     }
 
-    @OnClick(R.id.not_down_button)
+    @OnClick(R.id.dt_event_detail_not_down_button)
     public void onNotDown(){
         Toast.makeText(getActivity(), "Not down", Toast.LENGTH_SHORT).show();
     }
@@ -113,23 +119,69 @@ public class EventDetailFragment extends Fragment {
         });
     }
 
+    private void displayGuestList(final List<ParseObject> invites){
+        final LayoutInflater inflater = LayoutInflater.from(getContext());
+        guestsList.setAdapter(new BaseAdapter() {
+            @Override
+            public int getCount() {
+                return invites.size();
+            }
+
+            @Override
+            public Object getItem(int position) {
+                return invites.get(position);
+            }
+
+            @Override
+            public long getItemId(int position) {
+                return position;
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                if(convertView == null){
+                    convertView = inflater.inflate(R.layout.dt_guest_icon, parent, false);
+                }
+
+                CircularImageView guestProfileIcon = (CircularImageView) convertView;
+                final long now = System.currentTimeMillis();
+
+                ParseObject invite = (ParseObject) getItem(position);
+                final ParseUser guest = (ParseUser) invite.get(Constants.ActivityToUserKey);
+                convertView.setTag(guest);
+                ParseFile file = guest.getParseFile(Constants.UserProfilePicSmallKey);
+                boolean accepted = guest.getBoolean(Constants.ActivityAcceptedKey);
+                if(accepted &&  now < guest.getLong(Constants.ActivityExpirationKey)){
+                    guestProfileIcon.setColorFilter(new PorterDuffColorFilter(guestsList.getResources().getColor(R.color.fadedWhite), PorterDuff.Mode.SRC_IN));
+                } else if(!accepted){
+                    guestProfileIcon.setColorFilter(new PorterDuffColorFilter(guestsList.getResources().getColor(R.color.accentRed), PorterDuff.Mode.SRC_IN));
+                } else {
+                    guestProfileIcon.setColorFilter(null);
+                }
+                Picasso.with(getContext()).
+                        load(file.getUrl()).
+                        placeholder(R.drawable.ic_person_24dp).
+                        error(R.drawable.ic_person_24dp).
+                        into(guestProfileIcon);
+                return convertView;
+            }
+        });
+        guestsList.setDividerWidth(50);
+        guestsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ParseUser guest = (ParseUser) view.getTag();
+                listener.onUserSelected(guest);
+            }
+        });
+    }
+
     private void displayEvent(ParseObject event){
         ParseQuery<ParseObject> guestListQuery = getGuestListQuery(event, true);
         guestListQuery.findInBackground(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> objects, ParseException e) {
-                LayoutInflater inflater = LayoutInflater.from(getContext());
-                for (ParseObject invite : objects) {
-                    CircularImageView guestProfileIcon = (CircularImageView) inflater.inflate(R.layout.dt_detail_contact_view, guestsContainer, false);
-                    ParseUser guest = (ParseUser) invite.get(Constants.ActivityToUserKey);
-                    ParseFile file = guest.getParseFile(Constants.UserProfilePicSmallKey);
-                    guestsContainer.addView(guestProfileIcon);
-                    Picasso.with(getContext()).
-                            load(file.getUrl()).
-                            placeholder(R.drawable.ic_person_24dp).
-                            error(R.drawable.ic_person_24dp).
-                            into(guestProfileIcon);
-                }
+                displayGuestList(objects);
             }
         });
 
@@ -147,7 +199,27 @@ public class EventDetailFragment extends Fragment {
         }
     }
 
+    private void bindView(View v, ParseObject comment){
+        String commentText = comment.getString(Constants.ActivityContentKey);
+        ParseUser author = comment.getParseUser(Constants.ActivityFromUserKey);
+        String authorDisplayName = author.getString(Constants.UserDisplayNameKey);
+    }
+
+    private ParseQuery<ParseObject> getCommentsQuery(ParseObject event){
+        ParseQuery<ParseObject> commentsQuery = new ParseQuery<>(Constants.ActivityClassKey);
+        commentsQuery.whereEqualTo(Constants.ActivityEventKey, event);
+        commentsQuery.whereEqualTo(Constants.ActivityTypeKey, Constants.ActivityTypeComment);
+        commentsQuery.include(Constants.ActivityFromUserKey);
+        commentsQuery.orderByAscending("createdAt");
+        commentsQuery.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE);
+        return commentsQuery;
+    }
+
     public void setEvent(final ParseObject event) {
         this.event = event;
+    }
+
+    public void setOnUserSelectedListener(EventListFragment.OnUserSelectedListener listener) {
+        this.listener = listener;
     }
 }

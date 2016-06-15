@@ -64,12 +64,14 @@ public class AccountFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        user.fetchIfNeededInBackground(new GetCallback<ParseUser>() {
-            @Override
-            public void done(ParseUser object, ParseException e) {
-                displayUser(object);
-            }
-        });
+        if(user != null) {
+            user.fetchIfNeededInBackground(new GetCallback<ParseUser>() {
+                @Override
+                public void done(ParseUser object, ParseException e) {
+                    displayUser(object);
+                }
+            });
+        }
     }
 
     public void setUser(ParseUser user){

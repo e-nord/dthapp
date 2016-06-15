@@ -3,6 +3,7 @@ package com.dth.app.fragment;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -24,8 +25,10 @@ import java.util.List;
 
 public abstract class EventListFragment extends SwipeRefreshListFragment {
 
+    private static final int OBJECTS_PER_PAGE = 15;
     private ParseQueryAdapter<ParseObject> adapter;
-    private OnEventSelectedListener listener;
+    private OnEventSelectedListener eventSelectedListener;
+    private OnUserSelectedListener userSelectedListener;
 
     public abstract ParseQuery<ParseObject> getQuery();
 
@@ -37,18 +40,19 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         adapter.loadObjects();
     }
 
-    public void bindView(View v, ParseObject activity) {
-        TextView eventName = (TextView) v.findViewById(R.id.dt_name);
-        ImageView pic = (ImageView) v.findViewById(R.id.dt_profile_pic);
-        TextView status = (TextView) v.findViewById(R.id.dt_status_text);
-        View statusColor = v.findViewById(R.id.dt_status_color);
-        TextView nearbyLabel = (TextView) v.findViewById(R.id.dt_nearby_label);
+    public void bindView(View v, final ParseObject activity) {
+        final TextView eventName = (TextView) v.findViewById(R.id.dt_list_item_name);
+        final ImageView pic = (ImageView) v.findViewById(R.id.dt_list_item_profile_pic);
+        TextView statusText = (TextView) v.findViewById(R.id.dt_list_item_status_text);
+        View statusColorBar = v.findViewById(R.id.dt_list_item_status_color);
+        TextView nearbyLabel = (TextView) v.findViewById(R.id.dt_list_item_nearby_label);
+        v.setTag(activity);
 
-        String currentUserDisplayName = ParseUser.getCurrentUser().getString(Constants.UserDisplayNameKey);
-        ParseUser activityUser = (ParseUser) activity.get(Constants.ActivityFromUserKey);
-        String activityName = activity.getString(Constants.ActivityDTKey);
+        final String currentUserDisplayName = ParseUser.getCurrentUser().getString(Constants.UserDisplayNameKey);
+        final String activityName = activity.getString(Constants.ActivityDTKey);
+        final ParseUser activityUser = (ParseUser) activity.get(Constants.ActivityFromUserKey);
+
         String activityUserDisplayName = activityUser.getString(Constants.UserDisplayNameKey);
-
         String activityDisplayName = "DTH"; //FIXME
         if (!TextUtils.isEmpty(activityUserDisplayName)) {
             if (!TextUtils.isEmpty(activityName)) {
@@ -67,48 +71,83 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         ParseFile profilePic = activityUser.getParseFile(Constants.UserProfilePicSmallKey);
         Picasso.with(getContext()).load(profilePic.getUrl()).into(pic);
 
-        boolean isPublicEvent = true; //FIXME
-        if (isPublicEvent ||
-                activity.getString(Constants.ActivityPublicTagKey).equals(Constants.ActivityPublicTagTypePublicInvite) ||
-                activity.getString(Constants.ActivityPublicTagKey).equals(Constants.ActivityPublicTagTypePublic)) {
-            nearbyLabel.setVisibility(View.INVISIBLE);
-        } else {
+        String publicTag = activity.getString(Constants.ActivityPublicTagKey);
+        if (publicTag != null && (publicTag.equals(Constants.ActivityPublicTagTypePublicInvite) || publicTag.equals(Constants.ActivityPublicTagTypePublic))) {
             nearbyLabel.setVisibility(View.VISIBLE);
+        } else {
+            nearbyLabel.setVisibility(View.INVISIBLE);
         }
 
+        if(updateTimeleft(activity, statusText, statusColorBar)) {
+            queueTimeUpdate(v, activity, statusText, statusColorBar, 1000);
+        }
+    }
+
+    private void queueTimeUpdate(final View v, final ParseObject activity, final TextView statusText, final View statusColorBar, final long intervalMs){
+        v.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(v.getTag() == activity) { //FIXME use strict equality?
+                    if(updateTimeleft(activity, statusText, statusColorBar)) {
+                        queueTimeUpdate(v, activity, statusText, statusColorBar, intervalMs);
+                    }
+                }
+            }
+        }, intervalMs);
+    }
+
+    private boolean updateTimeleft(ParseObject activity, TextView statusText, View statusColorBar){
+        boolean shouldUpdate = false;
         int textColor;
         int color;
         long now = System.currentTimeMillis();
         long lifetimeSeconds = activity.getLong(Constants.DTHEventLifetimeKey) * 60;
         long finishTime = activity.getCreatedAt().getTime() + lifetimeSeconds;
         long timeLeftMs = now - finishTime;
-        if (timeLeftMs <= 0) {
-            status.setText(R.string.finished);
+        boolean expired = activity.getBoolean(Constants.ActivityExpiredKey);
+        long expirationTime = activity.getLong(Constants.ActivityExpirationKey);
+        if(expired){
+            statusText.setText(R.string.finished);
             color = getResources().getColor(R.color.colorLightAccent);
             textColor = color;
         } else {
-            if (activity.getBoolean(Constants.ActivityAcceptedKey)) {
-                color = ContextCompat.getColor(getContext(), R.color.colorPrimary);
-                textColor = color;
-                status.setText(R.string.down);
+            if(now < expirationTime) {
+                if (activity.getBoolean(Constants.ActivityAcceptedKey)) {
+                    color = ContextCompat.getColor(getContext(), R.color.colorPrimary);
+                    textColor = color;
+                    statusText.setText(R.string.down);
+                } else {
+                    String timeLeft = Utils.timeMillisToString(timeLeftMs);
+                    statusText.setText(String.format(getString(R.string.time_left), timeLeft));
+                    textColor = getResources().getColor(R.color.accentDarkRed);
+                    color = getResources().getColor(R.color.accentDarkRed);
+                    shouldUpdate = true;
+                }
             } else {
-                String timeLeft = Utils.timeMillisToString(timeLeftMs);
-                status.setText(timeLeft + " left");
-                textColor = getResources().getColor(R.color.black);
-                color = getResources().getColor(R.color.white);
+                statusText.setText(R.string.finished);
+                color = getResources().getColor(R.color.colorLightAccent);
+                textColor = color;
             }
         }
-
-        status.setTextColor(textColor);
-        statusColor.setBackgroundColor(color);
+        statusText.setTextColor(textColor);
+        statusColorBar.setBackgroundColor(color);
+        return shouldUpdate;
     }
 
     public interface OnEventSelectedListener {
         void onEventSelected(ParseObject event);
     }
 
+    public interface OnUserSelectedListener {
+        void onUserSelected(ParseUser user);
+    }
+
     public void setOnEventSelectedListener(OnEventSelectedListener listener) {
-        this.listener = listener;
+        this.eventSelectedListener = listener;
+    }
+
+    public void setOnUserSelectedListener(OnUserSelectedListener listener){
+        this.userSelectedListener = listener;
     }
 
     @Override
@@ -116,11 +155,20 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         super.onViewCreated(view, savedInstanceState);
         getListView().setVerticalScrollBarEnabled(false);
         getListView().setDrawSelectorOnTop(true);
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                ParseObject activity = (ParseObject) parent.getItemAtPosition(position);
+                ParseUser user = (ParseUser) activity.getParseObject(Constants.ActivityFromUserKey);
+                userSelectedListener.onUserSelected(user);
+                return true;
+            }
+        });
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 ParseObject activity = (ParseObject) parent.getItemAtPosition(position);
-                listener.onEventSelected(activity.getParseObject(Constants.ActivityEventKey));
+                eventSelectedListener.onEventSelected(activity.getParseObject(Constants.ActivityEventKey));
             }
         });
         ParseQueryAdapter.QueryFactory<ParseObject> factory =
@@ -139,6 +187,10 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
                 return view;
             }
 
+            @Override
+            public View getNextPageView(View v, ViewGroup parent) {
+                return LayoutInflater.from(getContext()).inflate(R.layout.load_more, parent, false);
+            }
         };
 
         adapter.addOnQueryLoadListener(new ParseQueryAdapter.OnQueryLoadListener<ParseObject>() {
@@ -161,7 +213,7 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
 
         adapter.setAutoload(false);
         adapter.setPaginationEnabled(true);
-        adapter.setObjectsPerPage(20);
+        adapter.setObjectsPerPage(OBJECTS_PER_PAGE);
         setListAdapter(adapter);
     }
 }
