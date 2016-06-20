@@ -37,4 +37,5 @@
     <string name="down_count">%1$s down</string>
     <string name="not_down_count">%1$s not down</string>
     <string name="dth_count">%1$s DTH</string>
+    <string name="visible_to_public">Also visible to nearby public</string>
 </resources>

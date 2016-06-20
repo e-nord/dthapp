@@ -9,6 +9,7 @@ import com.orhanobut.hawk.Hawk;
 import com.orhanobut.hawk.HawkBuilder;
 import com.orhanobut.hawk.LogLevel;
 import com.parse.Parse;
+import com.parse.ParseACL;
 import com.parse.ParseFacebookUtils;
 
 import io.branch.referral.Branch;
@@ -29,7 +30,7 @@ public class DTHApplication extends Application {
             }
         });
         Timber.plant(new Timber.DebugTree());
-//        Fabric.with(this, new Crashlytics());
+//        Fabric.with(this, new Digits(), new Crashlytics());
         Hawk.init(this)
                 .setEncryptionMethod(HawkBuilder.EncryptionMethod.NO_ENCRYPTION)
                 .setStorage(HawkBuilder.newSharedPrefStorage(this))
@@ -46,6 +47,11 @@ public class DTHApplication extends Application {
                 build());
         Parse.setLogLevel(Parse.LOG_LEVEL_DEBUG);
         ParseFacebookUtils.initialize(this);
+
+        ParseACL acl = new ParseACL();
+        acl.setPublicReadAccess(true);
+        ParseACL.setDefaultACL(acl, true);
+
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
                 .setDefaultFontPath(null)
                 .setFontAttrId(R.attr.fontPath)
