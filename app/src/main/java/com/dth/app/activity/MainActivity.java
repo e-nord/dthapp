@@ -9,8 +9,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -27,6 +30,7 @@ import com.dth.app.fragment.EventCreateFragment;
 import com.dth.app.fragment.EventDetailFragment;
 import com.dth.app.fragment.EventInviteFragment;
 import com.dth.app.fragment.EventListFragment;
+import com.dth.app.fragment.FriendInviteFragment;
 import com.dth.app.fragment.HomeFragment;
 import com.dth.app.fragment.NearbyFragment;
 import com.facebook.appevents.AppEventsLogger;
@@ -40,6 +44,8 @@ import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.BottomBarTab;
 import com.roughike.bottombar.OnTabClickListener;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import de.cketti.mailto.EmailIntentBuilder;
 import timber.log.Timber;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
@@ -48,16 +54,41 @@ public class MainActivity extends AppCompatActivity {
 
     private EventCreateFragment createFragment;
     private EventInviteFragment inviteFragment;
+    private FriendInviteFragment friendInviteFragment;
     private EventDetailFragment detailFragment;
     private HomeFragment homeFragment;
     private NearbyFragment nearbyFragment;
     private AccountFragment accountFragment;
     private BottomBar bottomBar;
 
+    @Bind(R.id.activity_main_section_pager)
+    ViewPager sectionPager;
+
     private static void launchFeedback(Activity activity) {
         Intent intent = EmailIntentBuilder.from(activity).build();
         //TODO populate fields
         activity.startActivityForResult(intent, 0);
+    }
+
+    private class SectionFragmentAdapter extends FragmentStatePagerAdapter {
+
+        private Fragment[] fragments;
+
+        public SectionFragmentAdapter(FragmentManager fm, Fragment... fragments) {
+            super(fm);
+            this.fragments = fragments;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return fragments[position];
+        }
+
+        @Override
+        public int getCount() {
+            return fragments.length;
+        }
+
     }
 
     @Override
@@ -77,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.activity_main_toolbar);
         setSupportActionBar(toolbar);
 
         assert getSupportActionBar() != null;
@@ -90,10 +121,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ButterKnife.bind(this);
+
         EventListFragment.OnEventSelectedListener eventListener = new EventListFragment.OnEventSelectedListener() {
             @Override
-            public void onEventSelected(ParseObject event) {
-                detailFragment.setEvent(event);
+            public void onEventSelected(ParseObject activity) {
+                detailFragment.setActivity(activity);
                 showFragment(detailFragment, "detail", true);
             }
         };
@@ -106,17 +139,31 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        inviteFragment = EventInviteFragment.newInstance();
-        detailFragment = EventDetailFragment.newInstance();
-        detailFragment.setOnUserSelectedListener(userListener);
-        createFragment = EventCreateFragment.newInstance();
-        accountFragment = AccountFragment.newInstance();
-        nearbyFragment = NearbyFragment.newInstance();
-        nearbyFragment.setOnEventSelectedListener(eventListener);
-        nearbyFragment.setOnUserSelectedListener(userListener);
         homeFragment = HomeFragment.newInstance();
         homeFragment.setOnEventSelectedListener(eventListener);
         homeFragment.setOnUserSelectedListener(userListener);
+
+        createFragment = EventCreateFragment.newInstance();
+
+        nearbyFragment = NearbyFragment.newInstance();
+        nearbyFragment.setOnEventSelectedListener(eventListener);
+        nearbyFragment.setOnUserSelectedListener(userListener);
+
+        SectionFragmentAdapter sectionAdapter = new SectionFragmentAdapter(getSupportFragmentManager(), homeFragment, createFragment, nearbyFragment);
+        sectionPager.setOffscreenPageLimit(2);
+        sectionPager.setAdapter(sectionAdapter);
+        sectionPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
+            @Override
+            public void onPageSelected(int position) {
+                bottomBar.selectTabAtPosition(position, true);
+            }
+        });
+
+        inviteFragment = EventInviteFragment.newInstance();
+        detailFragment = EventDetailFragment.newInstance();
+        detailFragment.setOnUserSelectedListener(userListener);
+        accountFragment = AccountFragment.newInstance();
+        friendInviteFragment = FriendInviteFragment.newInstance();
         bottomBar = BottomBar.attach(this, savedInstanceState);
         bottomBar.noNavBarGoodness();
         bottomBar.noTabletGoodness();
@@ -138,25 +185,13 @@ public class MainActivity extends AppCompatActivity {
         bottomBar.setOnTabClickListener(new OnTabClickListener() {
             @Override
             public void onTabSelected(int position) {
-                if (position == 0) {
-                    showFragment(homeFragment);
-                } else if (position == 1) {
-                    showFragment(createFragment);
-                } else if (position == 2) {
-                    showFragment(nearbyFragment);
-                }
+                sectionPager.setCurrentItem(position);
                 dthIcon.setColorFilter(null);
             }
 
             @Override
             public void onTabReSelected(int position) {
-                if (position == 0) {
-                    showFragment(homeFragment);
-                } else if (position == 1) {
-                    showFragment(createFragment);
-                } else if (position == 2) {
-                    showFragment(nearbyFragment);
-                }
+                sectionPager.setCurrentItem(position);
                 dthIcon.setColorFilter(null);
             }
         });
@@ -213,20 +248,16 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 transaction.setCustomAnimations(R.anim.slide_in_up, 0, 0, R.anim.slide_out_down);
             }
-            transaction.replace(R.id.content_main, fragment);
+            if(!fragment.isAdded()) {
+                transaction.add(R.id.activity_main_content_main, fragment);
+            } else {
+                transaction.show(fragment);
+            }
             if (tag != null) {
                 transaction.addToBackStack(tag);
             }
             transaction.commit();
         }
-    }
-
-    private void showFragment(Fragment fragment, String tag) {
-        showFragment(fragment, tag, false);
-    }
-
-    private void showFragment(Fragment fragment) {
-        showFragment(fragment, null);
     }
 
     @Override
@@ -273,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void displayUserAccount(ParseUser user){
         accountFragment.setUser(user);
-        showFragment(accountFragment, "account");
+        showFragment(accountFragment, "account", false);
     }
 
 }

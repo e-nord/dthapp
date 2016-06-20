@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import timber.log.Timber;
+
 public class NearbyFragment extends EventListFragment {
 
     private static final int NEARBY_EVENT_RADIUS_MILES = 20;
@@ -31,12 +33,14 @@ public class NearbyFragment extends EventListFragment {
 
     private void setUserLocation(ParseGeoPoint geoPoint, final UserLocationUpdateListener listener){
         ParseUser user = ParseUser.getCurrentUser();
-        user.put("currentLocation", geoPoint);
+        user.put(Constants.CURRENT_LOCATION, geoPoint);
         user.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
                 if(e == null){
                     listener.onUserLocationUpdated();
+                } else {
+                    Timber.e(e, "Failed to update user location");
                 }
             }
         });
@@ -67,7 +71,7 @@ public class NearbyFragment extends EventListFragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if(ParseUser.getCurrentUser() != null && ParseUser.getCurrentUser().get("currentLocation") == null){
+        if(ParseUser.getCurrentUser() != null && ParseUser.getCurrentUser().getParseGeoPoint(Constants.CURRENT_LOCATION) == null){
             updateUserLocation(new UserLocationUpdateListener() {
                 @Override
                 public void onUserLocationUpdated() {
@@ -92,7 +96,7 @@ public class NearbyFragment extends EventListFragment {
             innerQuery.whereExists(Constants.DTHEventTypeKey);
             innerQuery.whereEqualTo(Constants.DTHEventTypeKey, Constants.DTHEventTypePublic);
             innerQuery.whereExists(Constants.DTHEventLocationKey);
-            ParseGeoPoint geoPoint = (ParseGeoPoint) user.get("currentLocation");
+            ParseGeoPoint geoPoint = user.getParseGeoPoint(Constants.CURRENT_LOCATION);
             innerQuery.whereWithinMiles(Constants.DTHEventLocationKey, geoPoint, NEARBY_EVENT_RADIUS_MILES);
 
             query.whereEqualTo(Constants.ActivityTypeKey, Constants.ActivityTypeInvite);
@@ -129,7 +133,7 @@ public class NearbyFragment extends EventListFragment {
             // Do not show deleted events
             masterQuery.whereNotEqualTo(Constants.ActivityDeletedKey, true);
 
-            masterQuery.orderByDescending("createdAt");
+            masterQuery.orderByDescending(Constants.CREATED_AT);
             masterQuery.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE);
 
             return masterQuery;

@@ -12,14 +12,14 @@
         android:orientation="vertical">
 
         <TextView
-            style="@style/title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/welcome"/>
+            android:text="@string/welcome"
+            android:textColor="@color/colorPrimary"
+            android:textSize="32sp"/>
 
         <TextView
-            style="@style/feature_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
@@ -27,17 +27,20 @@
             android:paddingBottom="50dp"
             android:paddingLeft="25dp"
             android:paddingRight="25dp"
-            android:text="@string/dth_button_desc"/>
+            android:text="@string/dth_button_desc"
+            android:textColor="@color/colorPrimary"
+            android:textSize="24sp"/>
 
     </LinearLayout>
 
     <TextView
-        style="@style/tip_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="8dp"
-        android:text="@string/tap_below"/>
+        android:text="@string/tap_below"
+        android:textColor="@color/colorPrimary"
+        android:textSize="14sp"/>
 
 </RelativeLayout>

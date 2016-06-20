@@ -36,29 +36,11 @@
             android:src="@drawable/ic_person_24dp"
             app:civ_border_width="0dp"/>
 
-        <TextView
-            android:id="@+id/dt_list_item_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toRightOf="@id/dt_list_item_profile_pic"
-            android:textSize="16sp"/>
-
         <View
             android:id="@+id/dt_list_item_status_color"
             android:layout_width="10dp"
             android:layout_height="match_parent"
             android:layout_alignParentRight="true"/>
-
-        <TextView
-            android:id="@+id/dt_list_item_nearby_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/dt_list_item_name"
-            android:layout_toRightOf="@id/dt_list_item_profile_pic"
-            android:text="@string/nearby"
-            android:textColor="@color/nearby"
-            android:textSize="12sp"/>
 
         <TextView
             android:id="@+id/dt_list_item_status_text"
@@ -68,6 +50,27 @@
             android:layout_marginRight="4dp"
             android:layout_toLeftOf="@id/dt_list_item_status_color"
             android:padding="10dp"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/dt_list_item_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@id/dt_list_item_status_text"
+            android:layout_toRightOf="@id/dt_list_item_profile_pic"
+            android:ellipsize="end"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/dt_list_item_nearby_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/dt_list_item_name"
+            android:layout_toRightOf="@id/dt_list_item_profile_pic"
+            android:lines="1"
+            android:text="@string/nearby"
+            android:textColor="@color/nearby"
             android:textSize="12sp"/>
 
     </RelativeLayout>

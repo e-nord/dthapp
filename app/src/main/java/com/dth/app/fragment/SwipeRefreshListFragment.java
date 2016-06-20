@@ -131,14 +131,10 @@ public class SwipeRefreshListFragment extends ListFragment {
          * @return true if the {@link android.widget.ListView} is visible and can scroll up. 
          */ 
         @Override 
-        public boolean canChildScrollUp() { 
+        public boolean canChildScrollUp() {
             final ListView listView = getListView();
-            if (listView.getVisibility() == View.VISIBLE) {
-                return canListViewScrollUp(listView);
-            } else { 
-                return false; 
-            } 
-        } 
+            return listView.getVisibility() == View.VISIBLE && canListViewScrollUp(listView);
+        }
   
     } 
   

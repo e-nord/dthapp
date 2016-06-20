@@ -36,7 +36,7 @@ public class Constants {
     public static final String DTHEventCreatedByUserKey = "createdByUser";
     public static final String DTHEventDescriptionKey = "description";
     public static final String DTHEventUUIDKey = "uniqueId";
-    public static final String DTHEventLifetimeKey = "lifetime";
+    public static final String DTHEventLifetimeMinutesKey = "lifetime";
     public static final String DTHEventLocationKey = "location";
     public static final String DTHEventDTKey = "dt";
 
@@ -117,4 +117,7 @@ public class Constants {
     public static final String PushPayloadToUserObjectIdKey = "tu";
     public static final String PushPayloadPhotoObjectIdKey = "pid";
     public static final String PushPayloadActivityObjectIdKey = "aid";
+
+    public static final String CREATED_AT = "createdAt";
+    public static final String CURRENT_LOCATION = "currentLocation";
 }

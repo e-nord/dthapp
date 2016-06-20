@@ -1,38 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/background"
-                android:orientation="vertical">
-
-    <it.sephiroth.android.library.widget.HListView
-        android:id="@+id/dt_event_detail_guest_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <TextView
-        android:id="@+id/dt_event_detail_description"
-        style="@style/feature_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:gravity="center"
-        android:paddingLeft="40dp"
-        android:paddingRight="40dp"/>
-
-    <TextView
-        android:id="@+id/dt_event_detail_finish_in"
-        style="@style/detail_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/dt_event_detail_description"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:gravity="center"/>
+                android:background="@color/background">
 
     <LinearLayout
+        android:id="@+id/dt_event_detail_button_container"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:weightSum="1.0">
@@ -41,7 +18,7 @@
             android:id="@+id/dt_event_detail_down_button"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="48dp"
             android:layout_weight=".5"
             android:background="@drawable/positive_button"
             android:text="@string/down"
@@ -51,8 +28,9 @@
 
         <Button
             android:id="@+id/dt_event_detail_not_down_button"
+            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="48dp"
             android:layout_weight=".5"
             android:background="@drawable/negative_button"
             android:text="@string/not_down"
@@ -61,4 +39,78 @@
             android:textSize="18sp"/>
 
     </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/dt_event_detail_button_container"
+        android:layout_alignParentTop="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <it.sephiroth.android.library.widget.HListView
+                android:id="@+id/dt_event_detail_guest_list"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="12dp"/>
+
+            <TextView
+                android:id="@+id/dt_event_detail_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:paddingLeft="40dp"
+                android:paddingRight="40dp"
+                android:textColor="@color/colorPrimary"
+                android:textSize="24sp"
+                tools:text="This is an event description of a very long length. Stuff and things will be done here and then some."/>
+
+            <TextView
+                android:id="@+id/dt_event_detail_finish_in"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:textColor="@color/colorLightAccent"
+                android:textSize="16sp"
+                tools:text="finishes in 2 days"/>
+
+            <LinearLayout
+                android:id="@+id/dt_event_detail_comments_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.dth.app.NonScrollListView
+                    android:id="@+id/dt_event_detail_comments_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/dt_event_detail_comment_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:drawableLeft="@drawable/ic_comment_black_24dp"
+                    android:drawablePadding="16dp"
+                    android:hint="@string/add_a_comment"
+                    android:imeOptions="actionSend"
+                    android:inputType="text"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
 </RelativeLayout>

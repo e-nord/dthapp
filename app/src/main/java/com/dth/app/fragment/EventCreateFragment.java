@@ -120,7 +120,7 @@ public class EventCreateFragment extends Fragment {
                         beginTransaction().
                         setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right).
                         addToBackStack("invite").
-                        add(R.id.content_main, EventInviteFragment.newInstance()).
+                        add(R.id.activity_main_content_main, EventInviteFragment.newInstance()).
                         commit();
             }
         });

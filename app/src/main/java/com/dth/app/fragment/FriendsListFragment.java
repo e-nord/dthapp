@@ -1,9 +1,13 @@
 package com.dth.app.fragment;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,17 +20,67 @@ import com.parse.ParseQueryAdapter;
 import com.parse.ParseUser;
 import com.squareup.picasso.Picasso;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class FriendsListFragment extends ContactsListFragment {
 
-    private ParseQueryAdapter<ParseUser> adapter;
+    private FriendsAdapter adapter;
+
+    private static class FriendsAdapter extends ParseQueryAdapter<ParseUser> implements Filterable {
+
+        private final FriendsFilter filter;
+
+        public FriendsAdapter(Context context, QueryFactory<ParseUser> queryFactory, int itemViewResource) {
+            super(context, queryFactory, itemViewResource);
+            filter = new FriendsFilter();
+        }
+
+        @Override
+        public Filter getFilter() {
+            return filter;
+        }
+
+        private class FriendsFilter extends Filter {
+
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                FilterResults results = new FilterResults();
+                List<ParseUser> items = new LinkedList<>();
+                for(int i = 0; i < getCount(); i++){
+                    items.add(getItem(i));
+                }
+                if (!TextUtils.isEmpty(constraint)) {
+                    Iterator<ParseUser> iterator = items.iterator();
+                    while(iterator.hasNext()){
+                        if(!iterator.next().getString(Constants.UserDisplayNameKey).toUpperCase().startsWith(constraint.toString().toUpperCase())){
+                            iterator.remove();
+                        }
+                    }
+                }
+                results.values = items;
+                results.count = items.size();
+                return results;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                if (results.count == 0)
+                    notifyDataSetInvalidated();
+                else {
+                    notifyDataSetChanged();
+                }
+            }
+        }
+    }
 
     public class FacebookContact extends Contact {
         public ParseUser user;
 
         public FacebookContact(ParseUser user) {
             this.user = user;
+            this.name = user.getString(Constants.UserDisplayNameKey);
         }
 
         @Override
@@ -50,12 +104,12 @@ public class FriendsListFragment extends ContactsListFragment {
 
                 // Query for all friends you have on facebook and who are using the app
                 query.whereContainedIn(Constants.UserFacebookIDKey, facebookFriendIds);
-                query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ONLY);
+                query.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
                 query.orderByAscending(Constants.UserDisplayNameKey);
                 return query;
             }
         };
-        adapter = new ParseQueryAdapter<ParseUser>(getActivity(), factory, R.layout.contact_list_item){
+        adapter = new FriendsAdapter(getActivity(), factory, R.layout.contact_list_item){
             @Override
             public View getItemView(ParseUser user, View v, ViewGroup parent) {
                 View view = super.getItemView(user, v, parent);
@@ -73,7 +127,7 @@ public class FriendsListFragment extends ContactsListFragment {
                 if(isAdded() && isResumed()) {
                     setListShown(true);
                     if (objects != null) {
-                        Toast.makeText(getActivity(), "Loaded " + objects.size() + " events!", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(getActivity(), "Loaded " + objects.size() + " events!", Toast.LENGTH_LONG).show();
                     } else if (e != null) {
                         Toast.makeText(getActivity(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
@@ -83,9 +137,14 @@ public class FriendsListFragment extends ContactsListFragment {
         adapter.setAutoload(false);
     }
 
+    @Override
+    public void onQueryTextChanged(String query) {
+        adapter.getFilter().filter(query);
+    }
+
     private void bindView(ParseUser user, View view) {
         Contact contact = new FacebookContact(user);
-        view.setTag(view);
+        view.setTag(contact);
         TextView displayName = (TextView) view.findViewById(R.id.contact_list_item_name);
         CircularImageView icon = (CircularImageView) view.findViewById(R.id.contact_list_item_pic);
         CheckBox checkBox = (CheckBox) view.findViewById(R.id.contact_list_item_check);

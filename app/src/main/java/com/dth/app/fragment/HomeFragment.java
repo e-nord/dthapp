@@ -41,7 +41,7 @@ public class HomeFragment extends EventListFragment {
 
             query.whereNotEqualTo(Constants.ActivityDeletedKey, true);
 
-            query.orderByDescending("createdAt");
+            query.orderByDescending(Constants.CREATED_AT);
 
             query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ONLY);
 
