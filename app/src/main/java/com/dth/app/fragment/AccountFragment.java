@@ -23,6 +23,7 @@ import com.squareup.picasso.Picasso;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import jp.wasabeef.picasso.transformations.BlurTransformation;
+import timber.log.Timber;
 
 public class AccountFragment extends Fragment {
 
@@ -64,12 +65,14 @@ public class AccountFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        user.fetchIfNeededInBackground(new GetCallback<ParseUser>() {
-            @Override
-            public void done(ParseUser object, ParseException e) {
-                displayUser(object);
-            }
-        });
+        if(user != null) {
+            user.fetchIfNeededInBackground(new GetCallback<ParseUser>() {
+                @Override
+                public void done(ParseUser object, ParseException e) {
+                    displayUser(object);
+                }
+            });
+        }
     }
 
     public void setUser(ParseUser user){
@@ -99,6 +102,8 @@ public class AccountFragment extends Fragment {
             public void done(int count, ParseException e) {
                 if (e == null) {
                     dthCount.setText(String.valueOf(count) + " DTH" + (count == 1 ? "" : "s"));
+                } else {
+                    Timber.e(e, "Failed to fetch DTH count");
                 }
             }
         });
@@ -116,6 +121,8 @@ public class AccountFragment extends Fragment {
                 if (e == null) {
                     downCount.setText(String.format(getString(R.string.down_count), count));
                     notDownCount.setText(String.format(getString(R.string.not_down_count), 0));
+                }  else {
+                    Timber.e(e, "Failed to get down counts");
                 }
             }
         });

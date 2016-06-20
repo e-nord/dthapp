@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
 import android.widget.CheckBox;
+import android.widget.FilterQueryProvider;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
@@ -30,9 +31,9 @@ import io.branch.invite.util.BranchInviteUtil;
 
 public class PhoneContactListFragment extends ContactsListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private ContactsAdapter adapter;
-
     private static final Uri URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+    private static final String SORT = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
+    private static final String SELECT = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " CONTAINS ?";
     private static String[] PROJECTION = null;
 
     static {
@@ -54,13 +55,27 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
         }
     }
 
-    private static final String SORT =  ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
+    private ContactsAdapter adapter;
+
+    public static PhoneContactListFragment newInstance() {
+        return new PhoneContactListFragment();
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         adapter = new ContactsAdapter(getActivity());
+        adapter.setFilterQueryProvider(new FilterQueryProvider() {
+            @Override
+            public Cursor runQuery(CharSequence constraint) {
+                return getActivity().getContentResolver().query(URI, PROJECTION, SELECT, new String[]{constraint.toString() }, SORT);
+            }
+        });
         getLoaderManager().initLoader(0, null, this);
+    }
+
+    @Override
+    public void onQueryTextChanged(String query) {
 
     }
 
@@ -92,8 +107,29 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
         adapter.swapCursor(null);
     }
 
-    public static PhoneContactListFragment newInstance() {
-        return new PhoneContactListFragment();
+    public Intent getInviteIntent(String referralUrl, ArrayList<String> selectedContacts, String subject, String message) {
+        Intent inviteIntent;
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            inviteIntent = new Intent(Intent.ACTION_SENDTO);
+            inviteIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            inviteIntent.setType("vnd.android-dir/mms-sms");
+            inviteIntent.setData(Uri.parse("sms:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
+            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
+        } else {
+            inviteIntent = new Intent(Intent.ACTION_SENDTO);
+            inviteIntent.setType("text/plain");
+            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
+            inviteIntent.setData(Uri.parse("smsto:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
+
+            // In any old version of SMS app checking for subject and text params
+            inviteIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+            inviteIntent.putExtra(android.content.Intent.EXTRA_TEXT, message + "\n" + referralUrl);
+            inviteIntent.putExtra("address", BranchInviteUtil.formatListToCSV(selectedContacts));
+
+            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(getContext());
+            inviteIntent.setPackage(defaultSmsPackageName);
+        }
+        return inviteIntent;
     }
 
     private class ContactsAdapter extends CursorAdapter implements SectionIndexer {
@@ -108,29 +144,6 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
             return mInflater.inflate(R.layout.contact_list_item, viewGroup, false);
-        }
-
-        public class PhoneContact extends Contact {
-            public String phoneNumber;
-            public PhoneContact(Cursor cursor) {
-                int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-                name = cursor.getString(nameIdx);
-                int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-                phoneNumber = cursor.getString(phoneNumberIdx);
-            }
-
-            @Override
-            public String toString() {
-                return name + " - " + phoneNumber;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return other != null &&
-                        other instanceof PhoneContact &&
-                        super.equals(other) &&
-                        this.phoneNumber.equals(((PhoneContact) other).phoneNumber);
-            }
         }
 
         @Override
@@ -149,7 +162,7 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
 
         @Override
         public Cursor swapCursor(Cursor newCursor) {
-            if(newCursor != null) {
+            if (newCursor != null) {
                 int nameIdx = newCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
                 mAlphabetIndexer = new AlphabetIndexer(newCursor, nameIdx, getString(R.string.alphabet));
             }
@@ -176,30 +189,29 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
             }
             return mAlphabetIndexer.getSectionForPosition(i);
         }
-    }
 
-    public Intent getInviteIntent(String referralUrl, ArrayList<String> selectedContacts, String subject, String message) {
-        Intent inviteIntent;
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            inviteIntent = new Intent(Intent.ACTION_SENDTO);
-            inviteIntent.addCategory(Intent.CATEGORY_DEFAULT);
-            inviteIntent.setType("vnd.android-dir/mms-sms");
-            inviteIntent.setData(Uri.parse("sms:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
-            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
-        } else {
-            inviteIntent = new Intent(Intent.ACTION_SENDTO);
-            inviteIntent.setType("text/plain");
-            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
-            inviteIntent.setData(Uri.parse("smsto:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
+        public class PhoneContact extends Contact {
+            public String phoneNumber;
 
-            // In any old version of SMS app checking for subject and text params
-            inviteIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
-            inviteIntent.putExtra(android.content.Intent.EXTRA_TEXT, message + "\n" + referralUrl);
-            inviteIntent.putExtra("address", BranchInviteUtil.formatListToCSV(selectedContacts));
+            public PhoneContact(Cursor cursor) {
+                int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                name = cursor.getString(nameIdx);
+                int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                phoneNumber = cursor.getString(phoneNumberIdx);
+            }
 
-            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(getContext());
-            inviteIntent.setPackage(defaultSmsPackageName);
+            @Override
+            public String toString() {
+                return name + " - " + phoneNumber;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return other != null &&
+                        other instanceof PhoneContact &&
+                        super.equals(other) &&
+                        this.phoneNumber.equals(((PhoneContact) other).phoneNumber);
+            }
         }
-        return inviteIntent;
     }
 }

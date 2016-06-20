@@ -11,6 +11,7 @@ import com.orhanobut.hawk.LogLevel;
 import com.parse.Parse;
 import com.parse.ParseACL;
 import com.parse.ParseFacebookUtils;
+import com.parse.ParseInstallation;
 
 import io.branch.referral.Branch;
 import timber.log.Timber;
@@ -56,6 +57,7 @@ public class DTHApplication extends Application {
                 .setDefaultFontPath(null)
                 .setFontAttrId(R.attr.fontPath)
                 .build());
+        ParseInstallation.getCurrentInstallation().saveInBackground();
     }
 }
 

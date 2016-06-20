@@ -5,7 +5,10 @@
     <color name="colorPrimaryLight">#00d5c2</color>
     <color name="colorLightAccent">#CCCCCC</color>
     <color name="colorDarkAccent">#333333</color>
+    <color name="nearby">#3498db</color>
+    <color name="whiteOverlay">#66FFFFFF</color>
     <color name="accentRed">#E74C3C</color>
+    <color name="accentRedOverlay">#66E74C3C</color>
     <color name="accentDarkRed">#b74034</color>
     <color name="black">#000000</color>
     <color name="white">#ffffff</color>

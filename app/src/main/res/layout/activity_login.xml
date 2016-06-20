@@ -73,7 +73,6 @@
             tools:ignore="ContentDescription"/>
 
         <TextView
-            style="@style/fine_print"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/login_facebook_login_button_details"
@@ -81,7 +80,9 @@
             android:layout_marginLeft="50dp"
             android:layout_marginRight="50dp"
             android:gravity="center"
-            android:text="@string/eula_text"/>
+            android:text="@string/eula_text"
+            android:textColor="@color/black"
+            android:textSize="10sp"/>
 
     </RelativeLayout>
 

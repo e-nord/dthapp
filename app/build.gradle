@@ -66,6 +66,8 @@ dependencies {
     compile('com.digits.sdk.android:digits:1.10.3@aar') {
         transitive = true
     }
+    compile 'it.sephiroth.android.library.horizontallistview:hlistview:1.2.2'
+    compile 'com.joanfuentes:HintCase:1.0.2'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar')
     compile 'com.github.orhanobut:hawk:1.23'
     compile 'com.afollestad.material-dialogs:core:0.8.5.9'

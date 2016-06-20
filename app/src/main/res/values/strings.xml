@@ -37,5 +37,9 @@
     <string name="down_count">%1$s down</string>
     <string name="not_down_count">%1$s not down</string>
     <string name="dth_count">%1$s DTH</string>
+    <string name="time_left">"%1$s left"</string>
+    <string name="load_more">Load More...</string>
+    <string name="add_a_comment">Add a comment...</string>
+    <string name="search">Search...</string>
     <string name="visible_to_public">Also visible to nearby public</string>
 </resources>
