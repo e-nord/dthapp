@@ -403,9 +403,9 @@ public class EventDetailFragment extends Fragment {
                 boolean accepted = invite.getBoolean(Constants.ActivityAcceptedKey);
                 int fadeColor = getResources().getColor(R.color.whiteOverlay);
                 Date expirationDate = invite.getDate(Constants.ActivityExpirationKey);
-                if (accepted && now < expirationDate.getTime()) {
+                if (accepted) {
                     fadeColor = getResources().getColor(android.R.color.transparent);
-                } else if (!accepted && now >= expirationDate.getTime()) {
+                } else if (now >= expirationDate.getTime()) {
                     fadeColor = getResources().getColor(R.color.accentRedOverlay);
                 }
                 Picasso.with(getContext()).

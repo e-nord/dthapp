@@ -86,9 +86,14 @@ public class SwipeRefreshListFragment extends ListFragment {
      * 
      * @see android.support.v4.widget.SwipeRefreshLayout#setRefreshing(boolean) 
      */ 
-    public void setRefreshing(boolean refreshing) {
-        mSwipeRefreshLayout.setRefreshing(refreshing);
-    } 
+    public void setRefreshing(final boolean refreshing) {
+        mSwipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mSwipeRefreshLayout.setRefreshing(refreshing);
+            }
+        });
+    }
   
     /** 
      * Set the color scheme for the {@link android.support.v4.widget.SwipeRefreshLayout}. 

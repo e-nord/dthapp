@@ -45,9 +45,6 @@ public class AccountFragment extends Fragment {
     @Bind(R.id.account_dth_count)
     TextView dthCount;
 
-    @Bind(R.id.account_contacts_invited)
-    TextView contactsInvited;
-
     private ParseUser user;
 
     public static AccountFragment newInstance() {
@@ -127,6 +124,5 @@ public class AccountFragment extends Fragment {
             }
         });
 
-        contactsInvited.setText(String.format(getString(R.string.contacts_invite_promo), 0)); //FIXME
     }
 }
