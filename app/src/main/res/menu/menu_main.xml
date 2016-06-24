@@ -4,6 +4,13 @@
       tools:context=".app.activity.MainActivity">
 
     <item
+        android:id="@+id/action_invite"
+        android:orderInCategory="99"
+        android:icon="@drawable/ic_person_add_white_24dp"
+        android:title="@string/action_invite"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/action_account"
         android:orderInCategory="100"
         android:title="@string/action_account"

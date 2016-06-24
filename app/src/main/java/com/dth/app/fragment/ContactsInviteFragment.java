@@ -33,7 +33,6 @@ public class ContactsInviteFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         contactsInvited.setText(String.format(getString(R.string.contacts_invite_promo), 0));
     }
 }

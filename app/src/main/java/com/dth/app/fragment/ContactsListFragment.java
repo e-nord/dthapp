@@ -2,11 +2,18 @@ package com.dth.app.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import com.dth.app.R;
+import com.mikhaellopez.circularimageview.CircularImageView;
+import com.squareup.picasso.Picasso;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +25,27 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
     public ContactsListFragment() {}
 
     public class Contact {
-        public String name;
+        private final String name;
+        private final String profilePicUrl;
+        private final String phoneNumber;
+
+        public Contact(String name, String profilePicUrl, String phoneNumber) {
+            this.name = name;
+            this.profilePicUrl = profilePicUrl;
+            this.phoneNumber = phoneNumber;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getPhoneNumber() {
+            return phoneNumber;
+        }
+
+        public String getProfilePicUrl() {
+            return profilePicUrl;
+        }
 
         @Override
         public boolean equals(Object other) {
@@ -26,12 +53,25 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
                     other instanceof Contact &&
                     this.name.equals(((Contact) other).name);
         }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         selectedContacts = new HashSet<>();
+    }
+
+    protected void onContactSelected(Contact contact){
+
+    }
+
+    protected void onContactUnselected(Contact contact){
+
     }
 
     public abstract void onQueryTextChanged(String query);
@@ -70,6 +110,25 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
+    protected void bindView(Contact contact, View view){
+        TextView displayName = (TextView) view.findViewById(R.id.contact_list_item_name);
+        TextView phoneNumberLabel = (TextView) view.findViewById(R.id.contact_list_item_number);
+        CircularImageView icon = (CircularImageView) view.findViewById(R.id.contact_list_item_pic);
+        CheckBox checkBox = (CheckBox) view.findViewById(R.id.contact_list_item_check);
+        displayName.setText(contact.getName());
+        if (contact.getProfilePicUrl() != null) {
+            Picasso.with(getContext()).load(contact.getProfilePicUrl()).into(icon);
+        }
+        if(contact.getPhoneNumber() != null){
+            phoneNumberLabel.setText(PhoneNumberUtils.formatNumber(contact.phoneNumber));
+            phoneNumberLabel.setVisibility(View.VISIBLE);
+        } else {
+            phoneNumberLabel.setVisibility(View.GONE);
+        }
+        checkBox.setChecked(getSelectedContacts().contains(contact));
+        view.setTag(contact);
+    }
+
     public void setOnContactSelectedListener(OnContactSelectedListener onContactSelectedListener) {
         this.onContactSelectedListener = onContactSelectedListener;
     }
@@ -80,19 +139,29 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
 
     @Override
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+        handleClick(v);
+    }
+
+    private void handleClick(View v){
         Contact contact = (Contact) v.getTag();
-        onContactSelectedListener.onContactSelected(contact);
         if (selectedContacts.contains(contact)) {
             selectedContacts.remove(contact);
-            getListView().setItemChecked(position, false);
+            ((CheckBox)v.findViewById(R.id.contact_list_item_check)).setChecked(false);
+            if(onContactSelectedListener != null) {
+                onContactSelectedListener.onContactUnselected(contact);
+            }
         } else {
             selectedContacts.add(contact);
-            getListView().setItemChecked(position, true);
+            ((CheckBox)v.findViewById(R.id.contact_list_item_check)).setChecked(true);
+            if(onContactSelectedListener != null) {
+                onContactSelectedListener.onContactSelected(contact);
+            }
         }
     }
 
     public interface OnContactSelectedListener {
         void onContactSelected(Contact contact);
+        void onContactUnselected(Contact contact);
     }
 
 }

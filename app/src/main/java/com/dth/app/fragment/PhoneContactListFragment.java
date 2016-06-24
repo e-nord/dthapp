@@ -12,18 +12,14 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
-import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
-import android.widget.CheckBox;
 import android.widget.FilterQueryProvider;
 import android.widget.SectionIndexer;
-import android.widget.TextView;
 
 import com.dth.app.R;
-import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.ArrayList;
 
@@ -148,16 +144,12 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
 
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-            PhoneContact contact = new PhoneContact(cursor);
-            view.setTag(contact);
-            TextView displayName = (TextView) view.findViewById(R.id.contact_list_item_name);
-            CircularImageView icon = (CircularImageView) view.findViewById(R.id.contact_list_item_pic);
-            CheckBox checkbox = (CheckBox) view.findViewById(R.id.contact_list_item_check);
-            TextView phoneNumberLabel = (TextView) view.findViewById(R.id.contact_list_item_number);
-            displayName.setText(contact.name);
-            checkbox.setChecked(getSelectedContacts().contains(contact));
-            phoneNumberLabel.setText(PhoneNumberUtils.formatNumber(contact.phoneNumber));
-            phoneNumberLabel.setVisibility(View.VISIBLE);
+            int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+            String name = cursor.getString(nameIdx);
+            int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+            String phoneNumber = cursor.getString(phoneNumberIdx);
+            Contact contact = new Contact(name, null, phoneNumber);
+            PhoneContactListFragment.this.bindView(contact, view);
         }
 
         @Override
@@ -188,30 +180,6 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
                 return 0;
             }
             return mAlphabetIndexer.getSectionForPosition(i);
-        }
-
-        public class PhoneContact extends Contact {
-            public String phoneNumber;
-
-            public PhoneContact(Cursor cursor) {
-                int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-                name = cursor.getString(nameIdx);
-                int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-                phoneNumber = cursor.getString(phoneNumberIdx);
-            }
-
-            @Override
-            public String toString() {
-                return name + " - " + phoneNumber;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return other != null &&
-                        other instanceof PhoneContact &&
-                        super.equals(other) &&
-                        this.phoneNumber.equals(((PhoneContact) other).phoneNumber);
-            }
         }
     }
 }

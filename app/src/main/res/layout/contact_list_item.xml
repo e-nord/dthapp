@@ -11,17 +11,28 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="2dp"
         android:layout_marginRight="10dp"
         android:src="@drawable/ic_person"
         app:civ_border_color="@color/black"
         app:civ_border_width="1dp"/>
+
+    <CheckBox
+        android:id="@+id/contact_list_item_check"
+        android:layout_width="25dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="24dp"
+        android:clickable="false"
+        android:focusable="false"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@id/contact_list_item_pic"
+        android:layout_toLeftOf="@id/contact_list_item_check"
         android:orientation="vertical">
 
         <TextView
@@ -38,19 +49,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:visibility="gone"
             android:singleLine="true"
-            android:textSize="10sp"/>
+            android:textSize="10sp"
+            android:visibility="gone"/>
 
     </LinearLayout>
-
-    <CheckBox
-        android:id="@+id/contact_list_item_check"
-        android:layout_width="25dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="24dp"
-        android:focusable="false"/>
 
 </RelativeLayout>

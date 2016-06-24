@@ -56,12 +56,8 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EventCreateFragment createFragment;
-    private EventInviteFragment inviteFragment;
     private ContactsInviteFragment friendInviteFragment;
     private EventDetailFragment detailFragment;
-    private HomeFragment homeFragment;
-    private NearbyFragment nearbyFragment;
     private AccountFragment accountFragment;
     private BottomBar bottomBar;
 
@@ -158,13 +154,13 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        homeFragment = HomeFragment.newInstance();
+        HomeFragment homeFragment = HomeFragment.newInstance();
         homeFragment.setOnEventSelectedListener(eventListener);
         homeFragment.setOnUserSelectedListener(userListener);
 
-        createFragment = EventCreateFragment.newInstance();
+        EventCreateFragment createFragment = EventCreateFragment.newInstance();
 
-        nearbyFragment = NearbyFragment.newInstance();
+        NearbyFragment nearbyFragment = NearbyFragment.newInstance();
         nearbyFragment.setOnEventSelectedListener(eventListener);
         nearbyFragment.setOnUserSelectedListener(userListener);
 
@@ -178,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        inviteFragment = EventInviteFragment.newInstance();
+        EventInviteFragment inviteFragment = EventInviteFragment.newInstance();
         detailFragment = EventDetailFragment.newInstance();
         detailFragment.setOnUserSelectedListener(userListener);
         accountFragment = AccountFragment.newInstance();
@@ -281,7 +277,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_account) {
+        if(item.getItemId() == R.id.action_invite) {
+            showFragment(friendInviteFragment, "friendinvite", false);
+            return true;
+        } else if (item.getItemId() == R.id.action_account) {
             displayUserAccount(ParseUser.getCurrentUser());
             return true;
         } else if (item.getItemId() == R.id.action_feedback) {
