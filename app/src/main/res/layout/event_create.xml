@@ -16,7 +16,7 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/dt_create_title"
+                android:id="@+id/event_create_title"
                 fontPath="fonts/Braggadocio.ttf"
                 android:layout_width="205dp"
                 android:layout_height="wrap_content"
@@ -28,10 +28,10 @@
                 tools:ignore="MissingPrefix"/>
 
             <EditText
-                android:id="@+id/dt_create_edit"
+                android:id="@+id/event_create_edit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/dt_create_title"
+                android:layout_below="@id/event_create_title"
                 android:layout_marginBottom="8dp"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
@@ -42,7 +42,7 @@
                 android:id="@+id/dt_create_timer_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/dt_create_edit"
+                android:layout_below="@id/event_create_edit"
                 android:gravity="center_horizontal"
                 android:orientation="horizontal">
 
@@ -55,14 +55,14 @@
                     android:textSize="18sp"/>
 
                 <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/dt_create_spinner"
+                    android:id="@+id/event_create_spinner"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"/>
             </LinearLayout>
 
             <Button
-                android:id="@+id/dt_create_next_button"
+                android:id="@+id/event_create_next_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/dt_create_timer_container"
@@ -78,7 +78,7 @@
     </ScrollView>
 
     <FrameLayout
-        android:id="@+id/dt_create_suggestions_container"
+        android:id="@+id/event_create_suggestions_container"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_alignParentBottom="true"

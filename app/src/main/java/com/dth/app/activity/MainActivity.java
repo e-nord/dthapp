@@ -1,18 +1,14 @@
 package com.dth.app.activity;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -26,15 +22,13 @@ import android.widget.Toast;
 import com.dth.app.LoginManager;
 import com.dth.app.R;
 import com.dth.app.fragment.AccountFragment;
+import com.dth.app.fragment.ContactsInviteFragment;
 import com.dth.app.fragment.EventCreateFragment;
 import com.dth.app.fragment.EventDetailFragment;
-import com.dth.app.fragment.EventInviteFragment;
 import com.dth.app.fragment.EventListFragment;
-import com.dth.app.fragment.ContactsInviteFragment;
 import com.dth.app.fragment.HomeFragment;
 import com.dth.app.fragment.NearbyFragment;
 import com.facebook.appevents.AppEventsLogger;
-import com.joanfuentes.hintcase.HintCase;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.parse.ParseFacebookUtils;
@@ -56,13 +50,13 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ContactsInviteFragment friendInviteFragment;
-    private EventDetailFragment detailFragment;
+    private ContactsInviteFragment contactsInviteFragment;
     private AccountFragment accountFragment;
     private BottomBar bottomBar;
 
     @Bind(R.id.activity_main_section_pager)
     ViewPager sectionPager;
+    private EventListFragment.OnUserSelectedListener userListener;
 
     private static void launchFeedback(Activity activity) {
         Intent intent = EmailIntentBuilder.from(activity).build();
@@ -141,12 +135,13 @@ public class MainActivity extends AppCompatActivity {
         EventListFragment.OnEventSelectedListener eventListener = new EventListFragment.OnEventSelectedListener() {
             @Override
             public void onEventSelected(ParseObject activity) {
-                detailFragment.setActivity(activity);
-                showFragment(detailFragment, "detail", true);
+                EventDetailFragment fragment = EventDetailFragment.newInstance(activity.getObjectId());
+                fragment.setOnUserSelectedListener(userListener);
+                showFragment(fragment, "detail", true);
             }
         };
 
-        EventListFragment.OnUserSelectedListener userListener = new EventListFragment.OnUserSelectedListener() {
+        userListener = new EventListFragment.OnUserSelectedListener() {
             @Override
             public void onUserSelected(ParseUser user) {
                 accountFragment.setUser(user);
@@ -159,6 +154,17 @@ public class MainActivity extends AppCompatActivity {
         homeFragment.setOnUserSelectedListener(userListener);
 
         EventCreateFragment createFragment = EventCreateFragment.newInstance();
+        createFragment.setOnEventCreatedListener(new EventCreateFragment.OnEventCreatedListener() {
+            @Override
+            public void onEventCreated(ParseObject event) {
+                sectionPager.setCurrentItem(0);
+            }
+
+            @Override
+            public void onEventCreationFailure(Exception e) {
+
+            }
+        });
 
         NearbyFragment nearbyFragment = NearbyFragment.newInstance();
         nearbyFragment.setOnEventSelectedListener(eventListener);
@@ -174,11 +180,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        EventInviteFragment inviteFragment = EventInviteFragment.newInstance();
-        detailFragment = EventDetailFragment.newInstance();
-        detailFragment.setOnUserSelectedListener(userListener);
         accountFragment = AccountFragment.newInstance();
-        friendInviteFragment = ContactsInviteFragment.newInstance();
+        contactsInviteFragment = ContactsInviteFragment.newInstance();
         bottomBar = BottomBar.attach(this, savedInstanceState);
         bottomBar.noNavBarGoodness();
         bottomBar.noTabletGoodness();
@@ -187,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
         BottomBarTab dthTab = new BottomBarTab(R.mipmap.ic_launcher, "DTH");
         BottomBarTab nearbyTab = new BottomBarTab(R.drawable.ic_group_24dp, "Nearby");
         bottomBar.setItems(meTab, dthTab, nearbyTab);
+        bottomBar.setDefaultTabPosition(0);
 
         ViewGroup container = (ViewGroup) bottomBar.findViewById(R.id.bb_bottom_bar_item_container);
         container.getChildAt(0).getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -211,13 +215,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 5);
-        }
-
-        if (LoginManager.INSTANCE.isFirstLogin()) {
-            new HintCase(getWindow().getDecorView()).setTarget(dthIcon, true).show();
-        }
+//        if (LoginManager.INSTANCE.isFirstLogin()) {
+//            new HintCase(getWindow().getDecorView()).setTarget(dthIcon, true).show();
+//        }
     }
 
     @Override
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_invite) {
-            showFragment(friendInviteFragment, "friendinvite", false);
+            showFragment(contactsInviteFragment, "friendinvite", false);
             return true;
         } else if (item.getItemId() == R.id.action_account) {
             displayUserAccount(ParseUser.getCurrentUser());

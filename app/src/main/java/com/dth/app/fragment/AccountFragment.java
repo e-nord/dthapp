@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -51,6 +53,17 @@ public class AccountFragment extends Fragment {
         return new AccountFragment();
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
@@ -86,7 +99,7 @@ public class AccountFragment extends Fragment {
             Picasso.with(getActivity()).load(profilePicFile.getUrl()).into(profilePic);
             Picasso.with(getActivity()).load(profilePicFile.getUrl()).noFade().transform(new BlurTransformation(getContext(), 5)).into(background);
         } else {
-            Picasso.with(getActivity()).load(R.drawable.ic_person_48).into(profilePic);
+            Picasso.with(getActivity()).load(R.drawable.ic_person_48dp).into(profilePic);
         }
 
         dthCount.setText("0 DTHs");

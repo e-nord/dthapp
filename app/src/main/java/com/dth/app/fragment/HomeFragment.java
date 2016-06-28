@@ -35,8 +35,6 @@ public class HomeFragment extends EventListFragment {
             query.whereExists(Constants.ActivityFromUserKey);
             query.include(Constants.ActivityFromUserKey);
             query.include(Constants.ActivityReferringUserKey);
-            query.include(Constants.UserProfilePicSmallKey);
-
             query.include(Constants.ActivityEventKey);
 
             query.whereNotEqualTo(Constants.ActivityDeletedKey, true);
@@ -49,5 +47,4 @@ public class HomeFragment extends EventListFragment {
         }
         return query;
     }
-
 }

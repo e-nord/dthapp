@@ -13,65 +13,23 @@ import android.widget.TextView;
 
 import com.dth.app.R;
 import com.mikhaellopez.circularimageview.CircularImageView;
+import com.parse.ParseUser;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public abstract class ContactsListFragment extends ListFragment implements AdapterView.OnItemClickListener {
-    private OnContactSelectedListener onContactSelectedListener;
+    private OnContactListener contactListener;
     private Set<Contact> selectedContacts;
 
-    public ContactsListFragment() {}
-
-    public class Contact {
-        private final String name;
-        private final String profilePicUrl;
-        private final String phoneNumber;
-
-        public Contact(String name, String profilePicUrl, String phoneNumber) {
-            this.name = name;
-            this.profilePicUrl = profilePicUrl;
-            this.phoneNumber = phoneNumber;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getPhoneNumber() {
-            return phoneNumber;
-        }
-
-        public String getProfilePicUrl() {
-            return profilePicUrl;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other != null &&
-                    other instanceof Contact &&
-                    this.name.equals(((Contact) other).name);
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
+    public ContactsListFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         selectedContacts = new HashSet<>();
-    }
-
-    protected void onContactSelected(Contact contact){
-
-    }
-
-    protected void onContactUnselected(Contact contact){
-
     }
 
     public abstract void onQueryTextChanged(String query);
@@ -108,9 +66,10 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
         getListView().setOnItemClickListener(this);
         getListView().setFastScrollEnabled(true);
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        getListView().setSelector(R.drawable.list_selector);
     }
 
-    protected void bindView(Contact contact, View view){
+    protected void bindView(Contact contact, View view) {
         TextView displayName = (TextView) view.findViewById(R.id.contact_list_item_name);
         TextView phoneNumberLabel = (TextView) view.findViewById(R.id.contact_list_item_number);
         CircularImageView icon = (CircularImageView) view.findViewById(R.id.contact_list_item_pic);
@@ -119,18 +78,24 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
         if (contact.getProfilePicUrl() != null) {
             Picasso.with(getContext()).load(contact.getProfilePicUrl()).into(icon);
         }
-        if(contact.getPhoneNumber() != null){
+        if (contact.getPhoneNumber() != null) {
             phoneNumberLabel.setText(PhoneNumberUtils.formatNumber(contact.phoneNumber));
             phoneNumberLabel.setVisibility(View.VISIBLE);
         } else {
             phoneNumberLabel.setVisibility(View.GONE);
         }
-        checkBox.setChecked(getSelectedContacts().contains(contact));
+        boolean isSelected = getSelectedContacts().contains(contact);
+        checkBox.setChecked(isSelected);
+        if (isSelected) {
+            view.setBackgroundColor(getResources().getColor(R.color.colorLightAccent));
+        } else {
+            view.setBackgroundColor(getResources().getColor(R.color.white));
+        }
         view.setTag(contact);
     }
 
-    public void setOnContactSelectedListener(OnContactSelectedListener onContactSelectedListener) {
-        this.onContactSelectedListener = onContactSelectedListener;
+    public void setContactListener(OnContactListener contactListener) {
+        this.contactListener = contactListener;
     }
 
     public Set<Contact> getSelectedContacts() {
@@ -142,26 +107,72 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
         handleClick(v);
     }
 
-    private void handleClick(View v){
+    private void handleClick(View v) {
         Contact contact = (Contact) v.getTag();
         if (selectedContacts.contains(contact)) {
             selectedContacts.remove(contact);
-            ((CheckBox)v.findViewById(R.id.contact_list_item_check)).setChecked(false);
-            if(onContactSelectedListener != null) {
-                onContactSelectedListener.onContactUnselected(contact);
+            ((CheckBox) v.findViewById(R.id.contact_list_item_check)).setChecked(false);
+            if (contactListener != null) {
+                contactListener.onContactUnselected(contact);
             }
         } else {
             selectedContacts.add(contact);
-            ((CheckBox)v.findViewById(R.id.contact_list_item_check)).setChecked(true);
-            if(onContactSelectedListener != null) {
-                onContactSelectedListener.onContactSelected(contact);
+            ((CheckBox) v.findViewById(R.id.contact_list_item_check)).setChecked(true);
+            if (contactListener != null) {
+                contactListener.onContactSelected(contact);
             }
         }
     }
 
-    public interface OnContactSelectedListener {
+    public interface OnContactListener {
         void onContactSelected(Contact contact);
+
         void onContactUnselected(Contact contact);
+    }
+
+    public class Contact {
+        private final String name;
+        private final String profilePicUrl;
+        private final String phoneNumber;
+        private ParseUser user;
+
+        public Contact(String name, String profilePicUrl, String phoneNumber) {
+            this.name = name;
+            this.profilePicUrl = profilePicUrl;
+            this.phoneNumber = phoneNumber;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getPhoneNumber() {
+            return phoneNumber;
+        }
+
+        public String getProfilePicUrl() {
+            return profilePicUrl;
+        }
+
+        public ParseUser getUser() {
+            return user;
+        }
+
+        public void setUser(ParseUser user) {
+            this.user = user;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other != null &&
+                    other instanceof Contact &&
+                    this.name.equals(((Contact) other).name);
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
 }

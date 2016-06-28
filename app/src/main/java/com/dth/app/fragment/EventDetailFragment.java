@@ -4,17 +4,20 @@ import android.app.AlarmManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.dth.app.Constants;
 import com.dth.app.R;
@@ -33,12 +36,10 @@ import com.parse.SaveCallback;
 import com.squareup.picasso.Picasso;
 
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 import it.sephiroth.android.library.widget.AdapterView;
 import it.sephiroth.android.library.widget.HListView;
 import jp.wasabeef.picasso.transformations.ColorFilterTransformation;
@@ -46,86 +47,39 @@ import timber.log.Timber;
 
 public class EventDetailFragment extends Fragment {
 
-    @Bind(R.id.dt_event_detail_finish_in)
-    TextView finishIn;
-    @Bind(R.id.dt_event_detail_description)
-    TextView description;
-    @Bind(R.id.dt_event_detail_guest_list)
-    HListView guestsList;
-    @Bind(R.id.dt_event_detail_button_container)
-    ViewGroup buttonContainer;
-    @Bind(R.id.dt_event_detail_comments_container)
-    ViewGroup commentsContainer;
-    @Bind(R.id.dt_event_detail_comments_list)
-    ListView commentsList;
-    @Bind(R.id.dt_event_detail_comment_edit)
-    EditText commentEdit;
-
     private static final int COMMENTS_PER_PAGE = 10;
-
+    private static final int COMMENT_CHARACTER_LIMIT = 1024;
+    @Bind(R.id.event_detail_finish_in)
+    TextView finishIn;
+    @Bind(R.id.event_detail_description)
+    TextView description;
+    @Bind(R.id.event_detail_guest_list)
+    HListView guestsList;
+    @Bind(R.id.event_detail_button_container)
+    ViewGroup buttonContainer;
+    @Bind(R.id.event_detail_comments_container)
+    ViewGroup commentsContainer;
+    @Bind(R.id.event_detail_down_button)
+    Button downButton;
+    @Bind(R.id.event_detail_not_down_button)
+    Button notDownButton;
+    @Bind(R.id.event_detail_comments_list)
+    ListView commentsList;
+    @Bind(R.id.event_detail_comment_edit)
+    EditText commentEdit;
     private ParseQueryAdapter<ParseObject> commentAdapter;
-    private ParseObject activity;
-    private ParseObject event;
-    private ParseUser creator;
     private EventListFragment.OnUserSelectedListener listener;
+    private LayoutInflater inflater;
 
-    public static EventDetailFragment newInstance() {
-        return new EventDetailFragment();
+    public static EventDetailFragment newInstance(String inviteObjectId) {
+        Bundle args = new Bundle();
+        args.putString("inviteObjectId", inviteObjectId);
+        EventDetailFragment f = new EventDetailFragment();
+        f.setArguments(args);
+        return f;
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dt_event_detail_view, container, false);
-        ButterKnife.bind(this, view);
-        return view;
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        ParseQueryAdapter.QueryFactory<ParseObject> factory = new ParseQueryAdapter.QueryFactory<ParseObject>() {
-            @Override
-            public ParseQuery create() {
-                return getCommentsQuery(event);
-            }
-        };
-        commentAdapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory, R.layout.comment_view) {
-            @Override
-            public View getNextPageView(View v, ViewGroup parent) {
-                return LayoutInflater.from(getContext()).inflate(R.layout.load_more_small, parent, false);
-            }
-
-            @Override
-            public View getItemView(ParseObject comment, View v, ViewGroup parent) {
-                View view = super.getItemView(comment, v, parent);
-                bindCommentView(view, comment);
-                return view;
-            }
-        };
-        commentAdapter.setObjectsPerPage(COMMENTS_PER_PAGE);
-        commentAdapter.setPaginationEnabled(true);
-        commentAdapter.setAutoload(false);
-        commentsList.setAdapter(commentAdapter);
-    }
-
-    private void initCircleTimer() {
-        ParseQuery<ParseObject> hostsInviteEndsQuery = new ParseQuery<>(Constants.ActivityClassKey);
-        hostsInviteEndsQuery.whereEqualTo(Constants.ActivityTypeKey, Constants.ActivityTypeInvite);
-        hostsInviteEndsQuery.whereEqualTo(Constants.ActivityEventKey, event);
-        hostsInviteEndsQuery.whereEqualTo(Constants.ActivityToUserKey, event.getString(Constants.DTHEventCreatedByUserKey));
-        hostsInviteEndsQuery.getFirstInBackground(new GetCallback<ParseObject>() {
-            @Override
-            public void done(ParseObject object, ParseException e) {
-                if (e == null) {
-                    object.getDate(Constants.ActivityExpirationKey);
-                    //TODO show time circle
-                }
-            }
-        });
-    }
-
-    private ParseQuery<ParseObject> getGuestListQuery(ParseObject event, boolean includePublic) {
+    public static ParseQuery<ParseObject> getGuestListQuery(ParseObject event, boolean includePublic) {
         ParseQuery<ParseObject> guestListQuery = new ParseQuery<>(Constants.ActivityClassKey);
         guestListQuery.whereEqualTo(Constants.ActivityTypeKey, Constants.ActivityTypeInvite);
         guestListQuery.whereEqualTo(Constants.ActivityEventKey, event);
@@ -142,13 +96,13 @@ public class EventDetailFragment extends Fragment {
         return guestListQuery;
     }
 
-    private void expireInviteEventually(final ParseObject activity, final SaveCallback callback) {
+    public static void expireInvite(final ParseObject activity, final SaveCallback callback) {
         final ParseUser user = activity.getParseUser(Constants.ActivityToUserKey);
         // Set expired to YES
         activity.put(Constants.ActivityExpiredKey, true);
 
         // Set expires time to now
-        activity.put(Constants.ActivityExpirationKey, System.currentTimeMillis());
+        activity.put(Constants.ActivityExpirationKey, new Date());
 
         activity.saveInBackground(new SaveCallback() {
             @Override
@@ -175,7 +129,33 @@ public class EventDetailFragment extends Fragment {
         });
     }
 
-    private void acceptInviteEventually(ParseUser user, ParseObject event, SaveCallback callback) {
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+        inflater = getActivity().getLayoutInflater();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.event_detail, container, false);
+        ButterKnife.bind(this, view);
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        commentEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(COMMENT_CHARACTER_LIMIT)});
+    }
+
+    private void acceptInvite(ParseUser user, ParseObject event, SaveCallback callback) {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (user.getObjectId().equals(currentUser.getObjectId())) {
             return;
@@ -200,13 +180,14 @@ public class EventDetailFragment extends Fragment {
         dthACL.setPublicReadAccess(true);
         acceptActivity.setACL(dthACL);
 
-        acceptActivity.saveEventually(callback);
+        acceptActivity.saveInBackground(callback);
     }
 
-    private void setDown(boolean isDown) {
+    private void setDown(ParseObject invite, final ParseObject event, final ParseUser creator, boolean isDown) {
         hideButtons();
 
-        if (activity.getString(Constants.ActivityPublicTagKey).equals(Constants.ActivityPublicTagTypePublic)) {
+        String publicTag = invite.getString(Constants.ActivityPublicTagKey);
+        if (publicTag != null && publicTag.equals(Constants.ActivityPublicTagTypePublic)) {
             ParseObject inviteActivity = new ParseObject(Constants.ActivityClassKey);
             respondToInvite(event, inviteActivity, isDown, new SaveCallback() {
                 @Override
@@ -215,7 +196,7 @@ public class EventDetailFragment extends Fragment {
                         loadGuestList(event);
                         loadComments();
                         showComments();
-                    }  else {
+                    } else {
                         Timber.e(e, "Failed to respond to invite");
                     }
                 }
@@ -225,11 +206,11 @@ public class EventDetailFragment extends Fragment {
 
             if (isDown) {
 
-                activity.put(Constants.ActivityAcceptedKey, true);
+                invite.put(Constants.ActivityAcceptedKey, true);
 
                 long expirationTimeMs = event.getCreatedAt().getTime() + AlarmManager.INTERVAL_DAY * 7;
-                activity.put(Constants.ActivityExpirationKey, expirationTimeMs);
-                activity.saveInBackground(new SaveCallback() {
+                invite.put(Constants.ActivityExpirationKey, new Date(expirationTimeMs));
+                invite.saveInBackground(new SaveCallback() {
                     @Override
                     public void done(ParseException e) {
                         if (e == null) {
@@ -241,8 +222,7 @@ public class EventDetailFragment extends Fragment {
                         }
                     }
                 });
-
-                acceptInviteEventually(creator, event, new SaveCallback() {
+                acceptInvite(creator, event, new SaveCallback() {
                     @Override
                     public void done(ParseException e) {
                         if (e == null) {
@@ -253,7 +233,7 @@ public class EventDetailFragment extends Fragment {
                     }
                 });
             } else {
-                expireInviteEventually(activity, new SaveCallback() {
+                expireInvite(invite, new SaveCallback() {
                     @Override
                     public void done(ParseException e) {
                         if (e == null) {
@@ -267,18 +247,6 @@ public class EventDetailFragment extends Fragment {
                 });
             }
         }
-    }
-
-    @OnClick(R.id.dt_event_detail_down_button)
-    public void onDown() {
-        Toast.makeText(getActivity(), "Down", Toast.LENGTH_SHORT).show();
-        setDown(true);
-    }
-
-    @OnClick(R.id.dt_event_detail_not_down_button)
-    public void onNotDown() {
-        Toast.makeText(getActivity(), "Not down", Toast.LENGTH_SHORT).show();
-        setDown(false);
     }
 
     private void showComments() {
@@ -325,9 +293,9 @@ public class EventDetailFragment extends Fragment {
             long eventLifeTimeMs = event.getLong(Constants.DTHEventLifetimeMinutesKey) * 60 * 1000;
             long extensionTimeMs = eventLifeTimeMs + AlarmManager.INTERVAL_DAY * 7;
             long newExpirationTime = event.getCreatedAt().getTime() + extensionTimeMs;
-            activity.put(Constants.ActivityExpirationKey, newExpirationTime);
+            activity.put(Constants.ActivityExpirationKey, new Date(newExpirationTime));
         } else {
-            activity.put(Constants.ActivityExpirationKey, System.currentTimeMillis());
+            activity.put(Constants.ActivityExpirationKey, new Date());
         }
 
         // Set PublicTag to PublicInvite
@@ -339,38 +307,31 @@ public class EventDetailFragment extends Fragment {
         inviteACL.setPublicReadAccess(true);
         activity.setACL(inviteACL);
 
-        activity.saveEventually(callback);
+        activity.saveInBackground(callback);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        List<ParseObject> objects = new LinkedList<>();
-        if (event != null) {
-            objects.add(event);
-        }
-        if (activity != null) {
-            objects.add(activity);
-        }
-        if (creator != null) {
-            objects.add(creator);
-        }
-        if (!objects.isEmpty()) {
-            ParseObject.fetchAllIfNeededInBackground(objects, new FindCallback<ParseObject>() {
-                @Override
-                public void done(List<ParseObject> objects, ParseException e) {
-                    if (e == null) {
-                        displayEvent(event);
-                    } else {
-                        Timber.e(e, "Failed to fetch event details");
-                    }
+        String inviteObjectId = getArguments().getString("inviteObjectId");
+        ParseQuery<ParseObject> inviteQuery = new ParseQuery<>(Constants.ActivityClassKey);
+        inviteQuery.include(Constants.ActivityFromUserKey);
+        inviteQuery.include(Constants.ActivityEventKey);
+        inviteQuery.getInBackground(inviteObjectId, new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject invite, ParseException e) {
+                if (e == null) {
+                    ParseObject event = invite.getParseObject(Constants.ActivityEventKey);
+                    ParseUser user = invite.getParseUser(Constants.ActivityFromUserKey);
+                    displayEvent(invite, event, user);
+                } else {
+                    Timber.e(e, "Failed to fetch event details");
                 }
-            });
-        }
+            }
+        });
     }
 
     private void displayGuestList(final List<ParseObject> invites) {
-        final LayoutInflater inflater = LayoutInflater.from(getContext());
         guestsList.setAdapter(new BaseAdapter() {
             @Override
             public int getCount() {
@@ -390,7 +351,7 @@ public class EventDetailFragment extends Fragment {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 if (convertView == null) {
-                    convertView = inflater.inflate(R.layout.dt_guest_icon, parent, false);
+                    convertView = inflater.inflate(R.layout.guest_icon, parent, false);
                 }
 
                 CircularImageView guestProfileIcon = (CircularImageView) convertView;
@@ -437,9 +398,9 @@ public class EventDetailFragment extends Fragment {
         });
     }
 
-    private void setFinishInText(ParseObject activity){
+    private void setFinishInText(ParseObject invite) {
         long now = System.currentTimeMillis();
-        Date expirationDate = activity.getDate(Constants.ActivityExpirationKey);
+        Date expirationDate = invite.getDate(Constants.ActivityExpirationKey);
         long timeLeftMs = expirationDate.getTime() - now;
         if (timeLeftMs > 0) {
             finishIn.setText(String.format(getString(R.string.finishes_in), Utils.timeMillisToString(timeLeftMs)));
@@ -448,38 +409,79 @@ public class EventDetailFragment extends Fragment {
         }
     }
 
-    private void setDescriptionText(ParseObject event){
+    private void setDescriptionText(ParseObject event) {
         String eventDescription = event.getString(Constants.DTHEventDescriptionKey);
         // Replace occurances of \n with a line break
         eventDescription = eventDescription.replaceAll("\\n", "\n");
         description.setText(eventDescription);
     }
 
-    private void displayEvent(final ParseObject event) {
+    private void displayEvent(final ParseObject invite, final ParseObject event, final ParseUser creator) {
+        ParseQueryAdapter.QueryFactory<ParseObject> factory = new ParseQueryAdapter.QueryFactory<ParseObject>() {
+            @Override
+            public ParseQuery<ParseObject> create() {
+                return getCommentsQuery(event);
+            }
+        };
+        commentAdapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory, R.layout.comment_view) {
+            @Override
+            public View getNextPageView(View v, ViewGroup parent) {
+                return LayoutInflater.from(getContext()).inflate(R.layout.load_more_small, parent, false);
+            }
+
+            @Override
+            public View getItemView(ParseObject comment, View v, ViewGroup parent) {
+                View view = super.getItemView(comment, v, parent);
+                bindCommentView(view, comment);
+                return view;
+            }
+        };
+        commentAdapter.setObjectsPerPage(COMMENTS_PER_PAGE);
+        commentAdapter.setPaginationEnabled(true);
+        commentAdapter.setAutoload(false);
+        commentsList.setAdapter(commentAdapter);
+
+        downButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setDown(invite, event, creator, true);
+            }
+        });
+
+        notDownButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setDown(invite, event, creator, false);
+            }
+        });
+
         setDescriptionText(event);
-        setFinishInText(activity);
+        setFinishInText(invite);
         loadGuestList(event);
 
         // Decide whether to show yes/no buttons
-        String publicTag = activity.getString(Constants.ActivityPublicTagKey);
+        String publicTag = invite.getString(Constants.ActivityPublicTagKey);
         if (publicTag != null && publicTag.equals(Constants.ActivityPublicTagTypePublic) &&
                 !event.getParseUser(Constants.DTHEventCreatedByUserKey).getObjectId().equals(ParseUser.getCurrentUser().getObjectId())) {
             // If it's a public event, show Down/Not Down and don't allow comments (unless this is the event creator)
             hideComments();
             showButtons();
-        } else if (activity.getBoolean(Constants.ActivityAcceptedKey) || activity.getBoolean(Constants.ActivityExpiredKey)) {
+        } else if (invite.getBoolean(Constants.ActivityAcceptedKey) || invite.getBoolean(Constants.ActivityExpiredKey)) {
             // User has accepted or declined the invite!
             hideButtons();
             loadComments();
             showComments();
-        }
-
-        // If the lifetime has expired, do not init the down/not down buttons
-        // (opened a finished event)
-        long needToKnowTime = event.getCreatedAt().getTime() + AlarmManager.INTERVAL_DAY * 7;
-        if (System.currentTimeMillis() >= needToKnowTime) {
-            hideButtons();
-            disableComments();
+        } else {
+            // If the lifetime has expired, do not init the down/not down buttons
+            // (opened a finished event)
+            long finishTime = event.getCreatedAt().getTime() + (event.getLong(Constants.DTHEventLifetimeMinutesKey) * 60 * 1000);
+            if (System.currentTimeMillis() < finishTime) {
+                showButtons();
+                loadComments();
+            } else {
+                hideButtons();
+                disableComments();
+            }
         }
 
         commentEdit.setOnEditorActionListener(new EditText.OnEditorActionListener() {
@@ -494,10 +496,10 @@ public class EventDetailFragment extends Fragment {
         });
     }
 
-    private void postComment(final ParseObject event){
+    private void postComment(final ParseObject event) {
         String commentText = commentEdit.getText().toString().trim();
         ParseUser creator = event.getParseUser(Constants.DTHEventCreatedByUserKey);
-        if (!TextUtils.isEmpty(commentText) && commentText.length() < 1024 && creator != null) {
+        if (!TextUtils.isEmpty(commentText) && commentText.length() < COMMENT_CHARACTER_LIMIT && creator != null) {
             ParseObject comment = new ParseObject(Constants.ActivityClassKey);
             ParseUser currentUser = ParseUser.getCurrentUser();
             comment.put(Constants.ActivityContentKey, commentText);
@@ -516,7 +518,7 @@ public class EventDetailFragment extends Fragment {
             comment.saveInBackground(new SaveCallback() {
                 @Override
                 public void done(ParseException e) {
-                    if(e == null){
+                    if (e == null) {
                         loadComments();
                         commentEdit.setText("");
                     } else {
@@ -554,12 +556,6 @@ public class EventDetailFragment extends Fragment {
         commentsQuery.orderByAscending(Constants.CREATED_AT);
         commentsQuery.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
         return commentsQuery;
-    }
-
-    public void setActivity(ParseObject activity) {
-        this.activity = activity;
-        this.event = activity.getParseObject(Constants.ActivityEventKey);
-        this.creator = event.getParseUser(Constants.DTHEventCreatedByUserKey);
     }
 
     public void setOnUserSelectedListener(EventListFragment.OnUserSelectedListener listener) {

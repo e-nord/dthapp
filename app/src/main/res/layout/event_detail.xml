@@ -7,15 +7,16 @@
                 android:background="@color/background">
 
     <LinearLayout
-        android:id="@+id/dt_event_detail_button_container"
+        android:id="@+id/event_detail_button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
-        android:weightSum="1.0">
+        android:weightSum="1.0"
+        android:visibility="gone">
 
         <Button
-            android:id="@+id/dt_event_detail_down_button"
+            android:id="@+id/event_detail_down_button"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -27,7 +28,7 @@
             android:textSize="18sp"/>
 
         <Button
-            android:id="@+id/dt_event_detail_not_down_button"
+            android:id="@+id/event_detail_not_down_button"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -43,7 +44,7 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/dt_event_detail_button_container"
+        android:layout_above="@+id/event_detail_button_container"
         android:layout_alignParentTop="true">
 
         <LinearLayout
@@ -52,20 +53,20 @@
             android:orientation="vertical">
 
             <it.sephiroth.android.library.widget.HListView
-                android:id="@+id/dt_event_detail_guest_list"
+                android:id="@+id/event_detail_guest_list"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_margin="12dp"/>
 
             <TextView
-                android:id="@+id/dt_visibility_label"
+                android:id="@+id/event_detail_visibility_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/visible_to_public"
                 android:visibility="invisible"/>
 
             <TextView
-                android:id="@+id/dt_event_detail_description"
+                android:id="@+id/event_detail_description"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -77,7 +78,7 @@
                 tools:text="This is an event description of a very long length. Stuff and things will be done here and then some."/>
 
             <TextView
-                android:id="@+id/dt_event_detail_finish_in"
+                android:id="@+id/event_detail_finish_in"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -89,20 +90,20 @@
                 tools:text="finishes in 2 days"/>
 
             <LinearLayout
-                android:id="@+id/dt_event_detail_comments_container"
+                android:id="@+id/event_detail_comments_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone">
 
                 <com.dth.app.NonScrollListView
-                    android:id="@+id/dt_event_detail_comments_list"
+                    android:id="@+id/event_detail_comments_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"/>
 
                 <EditText
-                    android:id="@+id/dt_event_detail_comment_edit"
+                    android:id="@+id/event_detail_comment_edit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
