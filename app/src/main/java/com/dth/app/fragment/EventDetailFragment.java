@@ -69,7 +69,10 @@ public class EventDetailFragment extends Fragment {
     EditText commentEdit;
     private ParseQueryAdapter<ParseObject> commentAdapter;
     private EventListFragment.OnUserSelectedListener listener;
+<<<<<<< HEAD
     private LayoutInflater inflater;
+=======
+>>>>>>> master
 
     public static EventDetailFragment newInstance(String inviteObjectId) {
         Bundle args = new Bundle();
@@ -133,7 +136,10 @@ public class EventDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+<<<<<<< HEAD
         inflater = getActivity().getLayoutInflater();
+=======
+>>>>>>> master
     }
 
     @Override
