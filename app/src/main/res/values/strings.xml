@@ -32,15 +32,18 @@
     <string name="friends">Friends</string>
     <string name="login_error">Login Error</string>
     <string name="connection_error">There was a connection problem</string>
-    <string name="ok">ok</string>
-    <string name="cancel">cancel</string>
-    <string name="contacts_invite_promo">Invited %1$s contacts who created a DTH\n10 = stickers\n25 = t-shirt</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="contacts_invite_promo">Invited friends to get cool DTH stuff \n10 = stickers\n25 = t-shirt</string>
     <string name="down_count">%1$s down</string>
     <string name="not_down_count">%1$s not down</string>
     <string name="dth_count">%1$s DTH</string>
     <string name="time_left">"%1$s left"</string>
-    <string name="load_more">Load More...</string>
-    <string name="add_a_comment">Add a comment...</string>
-    <string name="search">Search...</string>
+    <string name="load_more">Load More…</string>
+    <string name="add_a_comment">Add a comment…</string>
+    <string name="search">Search…</string>
     <string name="visible_to_public">Also visible to nearby public</string>
+    <string name="invited">invited</string>
+    <string name="selected">selected</string>
+    <string name="no_friends">Looks like you do\'t have any friends on DTH yet!</string>
 </resources>

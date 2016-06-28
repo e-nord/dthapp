@@ -11,11 +11,13 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
+import com.dth.app.Constants;
 import com.dth.app.R;
+import com.parse.ParseUser;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class EventInviteFragment extends Fragment {
@@ -24,28 +26,26 @@ public class EventInviteFragment extends Fragment {
     private ContactsListFragment friendsList;
     private FloatingActionButton sendButton;
 
+    private OnUsersInvitedListener inviteListener;
+
     public static EventInviteFragment newInstance() {
         return new EventInviteFragment();
+    }
+
+    public void setOnUsersInvitedListener(OnUsersInvitedListener listener) {
+        this.inviteListener = listener;
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         ContactsFragmentPagerAdapter adapter = new ContactsFragmentPagerAdapter(getChildFragmentManager());
-        View view = inflater.inflate(R.layout.contacts_view, container, false);
+        View view = inflater.inflate(R.layout.event_invite, container, false);
 
-        sendButton = (FloatingActionButton) view.findViewById(R.id.contacts_send_button);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
-        ContactsListFragment.OnContactSelectedListener listener = new ContactsListFragment.OnContactSelectedListener() {
+        final ContactsListFragment.OnContactListener listener = new ContactsListFragment.OnContactListener() {
             @Override
             public void onContactSelected(ContactsListFragment.Contact contact) {
-                Toast.makeText(getActivity(), "Selected contact - " + contact, Toast.LENGTH_SHORT).show();
                 updateSendButton();
             }
 
@@ -55,9 +55,9 @@ public class EventInviteFragment extends Fragment {
             }
         };
         contactsList = PhoneContactListFragment.newInstance();
-        contactsList.setOnContactSelectedListener(listener);
+        contactsList.setContactListener(listener);
         friendsList = FriendsListFragment.newInstance();
-        friendsList.setOnContactSelectedListener(listener);
+        friendsList.setContactListener(listener);
         adapter.addFragment(friendsList, getActivity().getString(R.string.friends));
         adapter.addFragment(contactsList, getActivity().getString(R.string.contacts));
 
@@ -67,15 +67,39 @@ public class EventInviteFragment extends Fragment {
         TabLayout tabLayout = (TabLayout) view.findViewById(R.id.contacts_tabs);
         tabLayout.setupWithViewPager(pager);
 
+        sendButton = (FloatingActionButton) view.findViewById(R.id.contacts_send_button);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final List<ParseUser> users = new LinkedList<>();
+                boolean isPublic = false;
+                for (ContactsListFragment.Contact contact : friendsList.getSelectedContacts()) {
+                    if (contact.getUser() != null) {
+                        if (contact.getUser().getString(Constants.UserDisplayNameKey).equals(Constants.DTHNearbyPublicLabel)) {
+                            isPublic = true;
+                        } else {
+                            users.add(contact.getUser());
+                        }
+                    }
+                }
+                users.add(ParseUser.getCurrentUser());
+                inviteListener.onUsersInvited(users, isPublic);
+            }
+        });
+
         return view;
     }
 
-    private void updateSendButton(){
-        if(!friendsList.getSelectedContacts().isEmpty() || !contactsList.getSelectedContacts().isEmpty()){
+    private void updateSendButton() {
+        if (!friendsList.getSelectedContacts().isEmpty() || !contactsList.getSelectedContacts().isEmpty()) {
             sendButton.setVisibility(View.VISIBLE);
         } else {
             sendButton.setVisibility(View.GONE);
         }
+    }
+
+    public interface OnUsersInvitedListener {
+        void onUsersInvited(List<ParseUser> users, boolean isPublic);
     }
 
     private static final class ContactsFragmentPagerAdapter extends FragmentPagerAdapter {

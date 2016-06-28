@@ -5,7 +5,10 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -16,26 +19,43 @@ import android.widget.Toast;
 import com.dth.app.Constants;
 import com.dth.app.R;
 import com.dth.app.Utils;
+import com.parse.FindCallback;
+import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseQueryAdapter;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 import com.squareup.picasso.Picasso;
 
-import java.util.Date;
 import java.util.List;
 
 public abstract class EventListFragment extends SwipeRefreshListFragment {
 
     private static final int OBJECTS_PER_PAGE = 15;
+    private static final int MENU_ITEM_ID_VIEW_USER = 0;
+    private static final int MENU_ITEM_ID_VIEW_EVENT = 1;
+    private static final int MENU_ITEM_ID_CANCEL_EVENT = 2;
+    private static final int MENU_ITEM_ID_HIDE_EVENT = 3;
     private ParseQueryAdapter<ParseObject> adapter;
     private OnEventSelectedListener eventSelectedListener;
     private OnUserSelectedListener userSelectedListener;
 
+    private static void hideEvent(ParseObject invite, SaveCallback callback) {
+        invite.put(Constants.ActivityDeletedKey, true);
+        invite.saveInBackground(callback);
+    }
+
     public abstract ParseQuery<ParseObject> getQuery();
 
-    public void load(){
+    public void load() {
+        adapter.loadObjects();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         adapter.loadObjects();
     }
 
@@ -77,17 +97,17 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
             nearbyLabel.setVisibility(View.INVISIBLE);
         }
 
-        if(updateTimeleft(activity, statusText, statusColorBar)) {
+        if (updateTimeleft(activity, statusText, statusColorBar)) {
             queueTimeUpdate(v, activity, statusText, statusColorBar, AlarmManager.INTERVAL_HOUR / 60);
         }
     }
 
-    private void queueTimeUpdate(final View v, final ParseObject activity, final TextView statusText, final View statusColorBar, final long intervalMs){
+    private void queueTimeUpdate(final View v, final ParseObject activity, final TextView statusText, final View statusColorBar, final long intervalMs) {
         v.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(v.getTag() == activity) { //FIXME use strict equality?
-                    if(updateTimeleft(activity, statusText, statusColorBar)) {
+                if (v.getTag() == activity) { //FIXME use strict equality?
+                    if (updateTimeleft(activity, statusText, statusColorBar)) {
                         queueTimeUpdate(v, activity, statusText, statusColorBar, intervalMs);
                     }
                 }
@@ -95,7 +115,7 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         }, intervalMs);
     }
 
-    private boolean updateTimeleft(ParseObject activity, TextView statusText, View statusColorBar){
+    private boolean updateTimeleft(ParseObject activity, TextView statusText, View statusColorBar) {
         boolean shouldUpdate = false;
         int textColor;
         int color;
@@ -105,65 +125,122 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
         long finishTime = activity.getCreatedAt().getTime() + lifetimeMs;
         long timeLeftMs = finishTime - now;
         boolean expired = activity.getBoolean(Constants.ActivityExpiredKey);
-        Date expirationDate = activity.getDate(Constants.ActivityExpirationKey);
-        if(expired){
+        if (expired && now < finishTime) {
+            statusText.setText(R.string.not_down);
+            color = getResources().getColor(R.color.accentDarkRed);
+            textColor = color;
+        } else if (now < finishTime) {
+            if (activity.getBoolean(Constants.ActivityAcceptedKey)) {
+                color = ContextCompat.getColor(getContext(), R.color.colorPrimary);
+                textColor = color;
+                statusText.setText(R.string.down);
+            } else {
+                String timeLeft = Utils.timeMillisToString(timeLeftMs);
+                statusText.setText(String.format(getString(R.string.time_left), timeLeft));
+                textColor = getResources().getColor(R.color.accentDarkRed);
+                color = getResources().getColor(R.color.accentDarkRed);
+                shouldUpdate = true;
+            }
+        } else {
             statusText.setText(R.string.finished);
             color = getResources().getColor(R.color.colorLightAccent);
             textColor = color;
-        } else {
-            if(now < expirationDate.getTime()) {
-                if (activity.getBoolean(Constants.ActivityAcceptedKey)) {
-                    color = ContextCompat.getColor(getContext(), R.color.colorPrimary);
-                    textColor = color;
-                    statusText.setText(R.string.down);
-                } else {
-                    String timeLeft = Utils.timeMillisToString(timeLeftMs);
-                    statusText.setText(String.format(getString(R.string.time_left), timeLeft));
-                    textColor = getResources().getColor(R.color.accentDarkRed);
-                    color = getResources().getColor(R.color.accentDarkRed);
-                    shouldUpdate = true;
-                }
-            } else {
-                statusText.setText(R.string.finished);
-                color = getResources().getColor(R.color.colorLightAccent);
-                textColor = color;
-            }
         }
+
         statusText.setTextColor(textColor);
         statusColorBar.setBackgroundColor(color);
         return shouldUpdate;
-    }
-
-    public interface OnEventSelectedListener {
-        void onEventSelected(ParseObject activity);
-    }
-
-    public interface OnUserSelectedListener {
-        void onUserSelected(ParseUser user);
     }
 
     public void setOnEventSelectedListener(OnEventSelectedListener listener) {
         this.eventSelectedListener = listener;
     }
 
-    public void setOnUserSelectedListener(OnUserSelectedListener listener){
+    public void setOnUserSelectedListener(OnUserSelectedListener listener) {
         this.userSelectedListener = listener;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if (v.getId() == android.R.id.list) {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+            ParseObject activity = (ParseObject) getListView().getItemAtPosition(info.position);
+            menu.add(Menu.NONE, MENU_ITEM_ID_VIEW_USER, 0, "View User");
+            menu.add(Menu.NONE, MENU_ITEM_ID_VIEW_EVENT, 1, "View Event");
+            if (activity.getParseUser(Constants.DTHEventCreatedByUserKey).getObjectId().equals(ParseUser.getCurrentUser().getObjectId()) &&
+                    !activity.getBoolean(Constants.ActivityExpiredKey)) {
+                menu.add(Menu.NONE, MENU_ITEM_ID_CANCEL_EVENT, 2, "Cancel Event");
+            } else {
+                menu.add(Menu.NONE, MENU_ITEM_ID_HIDE_EVENT, 3, "Hide Event");
+            }
+        }
+    }
+
+    private void cancelEvent(ParseObject event) {
+        ParseQuery<ParseObject> guestListQuery = EventDetailFragment.getGuestListQuery(event, true);
+        guestListQuery.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if (e == null) {
+                    for (ParseObject activityForGuest : objects) {
+                        EventDetailFragment.expireInvite(activityForGuest, new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                if (e != null) {
+
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        ParseObject activity = (ParseObject) getListView().getItemAtPosition(info.position);
+        ParseUser user = activity.getParseUser(Constants.ActivityFromUserKey);
+
+        if (item.getItemId() == MENU_ITEM_ID_VIEW_USER) {
+            userSelectedListener.onUserSelected(user);
+            return true;
+        } else if (item.getItemId() == MENU_ITEM_ID_CANCEL_EVENT) {
+            ParseObject event = activity.getParseObject(Constants.ActivityEventKey);
+            cancelEvent(event);
+            hideEvent(activity, new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        adapter.loadObjects();
+                    }
+                }
+            });
+            return true;
+        } else if (item.getItemId() == MENU_ITEM_ID_HIDE_EVENT) {
+            hideEvent(activity, new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        adapter.loadObjects();
+                    }
+                }
+            });
+            return true;
+        } else if (item.getItemId() == MENU_ITEM_ID_VIEW_EVENT) {
+            eventSelectedListener.onEventSelected(activity);
+        }
+        return super.onContextItemSelected(item);
     }
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        registerForContextMenu(getListView());
         getListView().setVerticalScrollBarEnabled(false);
         getListView().setDrawSelectorOnTop(true);
-        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                ParseObject activity = (ParseObject) parent.getItemAtPosition(position);
-                ParseUser user = activity.getParseUser(Constants.ActivityFromUserKey);
-                userSelectedListener.onUserSelected(user);
-                return true;
-            }
-        });
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -179,7 +256,7 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
                 };
 
         // Pass the factory into the ParseQueryAdapter's constructor.
-        adapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory, R.layout.dt_list_item) {
+        adapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory, R.layout.event_list_item) {
             @Override
             public View getItemView(ParseObject activity, View v, ViewGroup parent) {
                 View view = super.getItemView(activity, v, parent);
@@ -200,9 +277,9 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
 
             @Override
             public void onLoaded(List<ParseObject> objects, Exception e) {
-                if(isAdded()) {
+                if (isAdded()) {
                     if (objects != null) {
-                       // Toast.makeText(getActivity(), "Loaded " + objects.size() + " events!", Toast.LENGTH_LONG).show();
+                        // Toast.makeText(getActivity(), "Loaded " + objects.size() + " events!", Toast.LENGTH_LONG).show();
                     } else if (e != null) {
                         Toast.makeText(getActivity(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
@@ -222,5 +299,13 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
                 load();
             }
         });
+    }
+
+    public interface OnEventSelectedListener {
+        void onEventSelected(ParseObject activity);
+    }
+
+    public interface OnUserSelectedListener {
+        void onUserSelected(ParseUser user);
     }
 }

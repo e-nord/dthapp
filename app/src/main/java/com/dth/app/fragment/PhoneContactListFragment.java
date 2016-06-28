@@ -1,14 +1,20 @@
 package com.dth.app.fragment;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
@@ -67,7 +73,6 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
                 return getActivity().getContentResolver().query(URI, PROJECTION, SELECT, new String[]{constraint.toString() }, SORT);
             }
         });
-        getLoaderManager().initLoader(0, null, this);
     }
 
     @Override
@@ -75,11 +80,28 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
 
     }
 
+    private static final int REQUEST_CODE_READ_CONTACTS = 5;
+
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        setListShown(false);
+
         setListAdapter(adapter);
+        setListShown(false);
+
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CODE_READ_CONTACTS);
+        } else {
+            getLoaderManager().initLoader(0, null, this);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == REQUEST_CODE_READ_CONTACTS && resultCode == Activity.RESULT_OK){
+            getLoaderManager().initLoader(0, null, this);
+        }
     }
 
     @Override

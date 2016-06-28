@@ -4,77 +4,36 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.dth.app.Constants;
-import com.parse.ParseException;
+import com.dth.app.Location;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import timber.log.Timber;
-
 public class NearbyFragment extends EventListFragment {
 
     private static final int NEARBY_EVENT_RADIUS_MILES = 20;
-    private static final int LOCATION_FETCH_TIMEOUT_MS = 30000;
 
     public static NearbyFragment newInstance() {
         return new NearbyFragment();
-    }
-
-    public interface UserLocationUpdateListener {
-        void onUserLocationUpdated();
-    }
-
-
-    private void setUserLocation(ParseGeoPoint geoPoint, final UserLocationUpdateListener listener){
-        ParseUser user = ParseUser.getCurrentUser();
-        user.put(Constants.CURRENT_LOCATION, geoPoint);
-        user.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if(e == null){
-                    listener.onUserLocationUpdated();
-                } else {
-                    Timber.e(e, "Failed to update user location");
-                }
-            }
-        });
-    }
-
-    public void updateUserLocation(final UserLocationUpdateListener listener){
-//        Criteria criteria = new Criteria();
-//        criteria.setPowerRequirement(Criteria.POWER_HIGH);
-//        criteria.setAccuracy(Criteria.ACCURACY_LOW);
-//        criteria.setAltitudeRequired(false);
-//        criteria.setSpeedRequired(false);
-//        criteria.setBearingRequired(false);
-//        ParseGeoPoint.getCurrentLocationInBackground(LOCATION_FETCH_TIMEOUT_MS, criteria, new LocationCallback() {
-//            @Override
-//            public void done(ParseGeoPoint geoPoint, ParseException e) {
-//                if(e == null){
-//                    setUserLocation(geoPoint, listener);
-//                    refresh();
-//                } else {
-//                    Log.e("NearbyFragment", "Location update error", e);
-//                }
-//            }
-//        });
-        ParseGeoPoint fakePoint = new ParseGeoPoint(47.6516580, -122.3422210);
-        setUserLocation(fakePoint, listener);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if(ParseUser.getCurrentUser() != null && ParseUser.getCurrentUser().getParseGeoPoint(Constants.CURRENT_LOCATION) == null){
-            updateUserLocation(new UserLocationUpdateListener() {
+            Location.updateUserLocation(new Location.UserLocationUpdateListener() {
                 @Override
-                public void onUserLocationUpdated() {
+                public void onUserLocationUpdated(ParseGeoPoint geoPoint) {
+                    load();
+                }
+
+                @Override
+                public void onUserLocationError(Exception e) {
                     load();
                 }
             });
