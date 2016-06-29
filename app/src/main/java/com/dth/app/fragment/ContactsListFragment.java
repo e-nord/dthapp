@@ -2,7 +2,6 @@ package com.dth.app.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +11,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.dth.app.R;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.parse.ParseUser;
 import com.squareup.picasso.Picasso;
@@ -79,7 +81,13 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
             Picasso.with(getContext()).load(contact.getProfilePicUrl()).into(icon);
         }
         if (contact.getPhoneNumber() != null) {
-            phoneNumberLabel.setText(PhoneNumberUtils.formatNumber(contact.phoneNumber));
+            try {
+                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                Phonenumber.PhoneNumber numberProto = phoneUtil.parse(contact.getPhoneNumber(), "US");
+                phoneNumberLabel.setText(phoneUtil.format(numberProto, PhoneNumberUtil.PhoneNumberFormat.NATIONAL));
+            } catch (NumberParseException e){
+                phoneNumberLabel.setText(contact.getPhoneNumber());
+            }
             phoneNumberLabel.setVisibility(View.VISIBLE);
         } else {
             phoneNumberLabel.setVisibility(View.GONE);

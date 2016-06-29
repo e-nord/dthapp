@@ -24,8 +24,8 @@
                 fontPath="fonts/Braggadocio.ttf"
                 android:layout_width="96dp"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:layout_gravity="center"
+                android:gravity="center"
                 android:text="@string/app_name"
                 android:textColor="@color/white"
                 android:textSize="28sp"
@@ -40,10 +40,16 @@
         android:layout_height="match_parent"
         android:layout_marginTop="?attr/actionBarSize">
 
-        <android.support.v4.view.ViewPager
-            android:id="@+id/activity_main_section_pager"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent">
+
+            <android.support.v4.view.ViewPager
+                android:id="@+id/activity_main_section_pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        </FrameLayout>
 
         <FrameLayout
             android:id="@+id/activity_main_content_main"

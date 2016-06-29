@@ -54,8 +54,8 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
         adapter.loadObjects();
     }
 
@@ -163,7 +163,6 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-<<<<<<< HEAD
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         ParseObject invite = (ParseObject) getListView().getItemAtPosition(info.position);
         menu.add(Menu.NONE, MENU_ITEM_ID_VIEW_USER, 0, "View User");
@@ -174,19 +173,6 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
             menu.add(Menu.NONE, MENU_ITEM_ID_CANCEL_EVENT, 2, "Cancel Event");
         } else {
             menu.add(Menu.NONE, MENU_ITEM_ID_HIDE_EVENT, 3, "Hide Event");
-=======
-        if (v.getId() == android.R.id.list) {
-            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            ParseObject activity = (ParseObject) getListView().getItemAtPosition(info.position);
-            menu.add(Menu.NONE, MENU_ITEM_ID_VIEW_USER, 0, "View User");
-            menu.add(Menu.NONE, MENU_ITEM_ID_VIEW_EVENT, 1, "View Event");
-            if (activity.getParseUser(Constants.DTHEventCreatedByUserKey).getObjectId().equals(ParseUser.getCurrentUser().getObjectId()) &&
-                    !activity.getBoolean(Constants.ActivityExpiredKey)) {
-                menu.add(Menu.NONE, MENU_ITEM_ID_CANCEL_EVENT, 2, "Cancel Event");
-            } else {
-                menu.add(Menu.NONE, MENU_ITEM_ID_HIDE_EVENT, 3, "Hide Event");
-            }
->>>>>>> master
         }
     }
 
@@ -244,10 +230,7 @@ public abstract class EventListFragment extends SwipeRefreshListFragment {
             return true;
         } else if (item.getItemId() == MENU_ITEM_ID_VIEW_EVENT) {
             eventSelectedListener.onEventSelected(activity);
-<<<<<<< HEAD
             return true;
-=======
->>>>>>> master
         }
         return super.onContextItemSelected(item);
     }

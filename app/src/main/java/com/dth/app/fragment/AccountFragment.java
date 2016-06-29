@@ -47,10 +47,12 @@ public class AccountFragment extends Fragment {
     @Bind(R.id.account_dth_count)
     TextView dthCount;
 
-    private ParseUser user;
-
-    public static AccountFragment newInstance() {
-        return new AccountFragment();
+    public static AccountFragment newInstance(String userObjectId) {
+        Bundle args = new Bundle();
+        args.putString("userObjectId", userObjectId);
+        AccountFragment f = new AccountFragment();
+        f.setArguments(args);
+        return f;
     }
 
     @Override
@@ -75,18 +77,17 @@ public class AccountFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(user != null) {
-            user.fetchIfNeededInBackground(new GetCallback<ParseUser>() {
-                @Override
-                public void done(ParseUser object, ParseException e) {
+        String userObjectId = getArguments().getString("userObjectId");
+        ParseQuery<ParseUser> userQuery = ParseUser.getQuery();
+        userQuery.setCachePolicy(ParseQuery.CachePolicy.CACHE_THEN_NETWORK);
+        userQuery.getInBackground(userObjectId, new GetCallback<ParseUser>() {
+            @Override
+            public void done(ParseUser object, ParseException e) {
+                if(e == null){
                     displayUser(object);
                 }
-            });
-        }
-    }
-
-    public void setUser(ParseUser user){
-        this.user = user;
+            }
+        });
     }
 
     private void displayUser(ParseUser user) {

@@ -50,8 +50,6 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ContactsInviteFragment contactsInviteFragment;
-    private AccountFragment accountFragment;
     private BottomBar bottomBar;
 
     @Bind(R.id.activity_main_section_pager)
@@ -144,8 +142,7 @@ public class MainActivity extends AppCompatActivity {
         userListener = new EventListFragment.OnUserSelectedListener() {
             @Override
             public void onUserSelected(ParseUser user) {
-                accountFragment.setUser(user);
-                showFragment(accountFragment, "account", true);
+                displayUserAccount(user);
             }
         };
 
@@ -180,9 +177,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        accountFragment = AccountFragment.newInstance();
-        contactsInviteFragment = ContactsInviteFragment.newInstance();
-        bottomBar = BottomBar.attach(this, savedInstanceState);
+        bottomBar = BottomBar.attach(sectionPager, savedInstanceState);
         bottomBar.noNavBarGoodness();
         bottomBar.noTabletGoodness();
 
@@ -278,7 +273,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_invite) {
-            showFragment(contactsInviteFragment, "friendinvite", false);
+            ContactsInviteFragment fragment = ContactsInviteFragment.newInstance();
+            showFragment(fragment, "friendinvite", false);
             return true;
         } else if (item.getItemId() == R.id.action_account) {
             displayUserAccount(ParseUser.getCurrentUser());
@@ -326,8 +322,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void displayUserAccount(ParseUser user) {
-        accountFragment.setUser(user);
-        showFragment(accountFragment, "account", false);
+        AccountFragment fragment = AccountFragment.newInstance(user.getObjectId());
+        showFragment(fragment, "account", true);
     }
 
 }

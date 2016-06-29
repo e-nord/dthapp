@@ -67,12 +67,12 @@ public class EventDetailFragment extends Fragment {
     ListView commentsList;
     @Bind(R.id.event_detail_comment_edit)
     EditText commentEdit;
+    @Bind(R.id.event_detail_visibility_label)
+    View visibilityLabel;
+
     private ParseQueryAdapter<ParseObject> commentAdapter;
     private EventListFragment.OnUserSelectedListener listener;
-<<<<<<< HEAD
     private LayoutInflater inflater;
-=======
->>>>>>> master
 
     public static EventDetailFragment newInstance(String inviteObjectId) {
         Bundle args = new Bundle();
@@ -136,10 +136,7 @@ public class EventDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-<<<<<<< HEAD
         inflater = getActivity().getLayoutInflater();
-=======
->>>>>>> master
     }
 
     @Override
@@ -267,6 +264,10 @@ public class EventDetailFragment extends Fragment {
         commentEdit.setVisibility(View.GONE);
     }
 
+    private void enableComments() {
+        commentEdit.setVisibility(View.VISIBLE);
+    }
+
     private void showButtons() {
         buttonContainer.setVisibility(View.VISIBLE);
     }
@@ -317,8 +318,12 @@ public class EventDetailFragment extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
+        loadEvent();
+    }
+
+    private void loadEvent(){
         String inviteObjectId = getArguments().getString("inviteObjectId");
         ParseQuery<ParseObject> inviteQuery = new ParseQuery<>(Constants.ActivityClassKey);
         inviteQuery.include(Constants.ActivityFromUserKey);
@@ -451,6 +456,8 @@ public class EventDetailFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 setDown(invite, event, creator, true);
+                showComments();
+                enableComments();
             }
         });
 
@@ -464,29 +471,31 @@ public class EventDetailFragment extends Fragment {
         setDescriptionText(event);
         setFinishInText(invite);
         loadGuestList(event);
+        loadComments();
+        showComments();
 
-        // Decide whether to show yes/no buttons
         String publicTag = invite.getString(Constants.ActivityPublicTagKey);
-        if (publicTag != null && publicTag.equals(Constants.ActivityPublicTagTypePublic) &&
-                !event.getParseUser(Constants.DTHEventCreatedByUserKey).getObjectId().equals(ParseUser.getCurrentUser().getObjectId())) {
-            // If it's a public event, show Down/Not Down and don't allow comments (unless this is the event creator)
-            hideComments();
-            showButtons();
-        } else if (invite.getBoolean(Constants.ActivityAcceptedKey) || invite.getBoolean(Constants.ActivityExpiredKey)) {
-            // User has accepted or declined the invite!
-            hideButtons();
-            loadComments();
-            showComments();
+        if (publicTag != null && publicTag.equals(Constants.ActivityPublicTagTypePublic)){
+            visibilityLabel.setVisibility(View.VISIBLE);
         } else {
-            // If the lifetime has expired, do not init the down/not down buttons
-            // (opened a finished event)
+            visibilityLabel.setVisibility(View.INVISIBLE);
+        }
+
             long finishTime = event.getCreatedAt().getTime() + (event.getLong(Constants.DTHEventLifetimeMinutesKey) * 60 * 1000);
-            if (System.currentTimeMillis() < finishTime) {
+        long now = System.currentTimeMillis();
+        boolean hasAccepted = invite.getBoolean(Constants.ActivityAcceptedKey);
+        boolean isInviteExpired = invite.getBoolean(Constants.ActivityExpiredKey);
+
+        if(now >= finishTime){ //is finished
+            disableComments();
+            hideButtons();
+        } else {
+            if(!hasAccepted && !isInviteExpired){ //haven't selected down or not down yet
                 showButtons();
-                loadComments();
+                disableComments();
             } else {
                 hideButtons();
-                disableComments();
+                enableComments();
             }
         }
 

@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background">
+    android:background="@color/background"
+    tools:background="@color/black">
 
     <ImageView
         android:id="@+id/account_background"
@@ -21,24 +22,26 @@
         android:orientation="horizontal"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
-        android:weightSum="1.0">
+        android:weightSum="100">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight=".25"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_weight="30">
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:id="@+id/account_dth_icon"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="24dp"
                 android:src="@mipmap/ic_dth"/>
 
             <TextView
                 android:id="@+id/account_dth_count"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/account_dth_icon"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:shadowColor="@color/black"
@@ -46,20 +49,21 @@
                 android:shadowDy="1"
                 android:shadowRadius="1"
                 android:textColor="@color/white"
-                android:textSize="18sp"/>
-        </LinearLayout>
+                android:textSize="18sp"
+                tools:text="4 DTHs"/>
+        </RelativeLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight=".50"
+            android:layout_weight="40"
             android:gravity="center"
             android:orientation="vertical">
 
             <com.mikhaellopez.circularimageview.CircularImageView
                 android:id="@+id/account_profile_pic"
-                android:layout_width="144dp"
-                android:layout_height="144dp"
+                android:layout_width="122dp"
+                android:layout_height="122dp"
                 android:layout_gravity="center"/>
 
             <TextView
@@ -68,45 +72,50 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
+                android:gravity="center"
                 android:shadowColor="@color/black"
                 android:shadowDx="1"
                 android:shadowDy="1"
                 android:shadowRadius="1"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                tools:text="Ethan Nordness"/>
 
         </LinearLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight=".25"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_weight="30">
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:id="@+id/account_down_icon"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="12dp"
                 android:src="@mipmap/ic_down"/>
 
             <TextView
                 android:id="@+id/account_down_count"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_below="@id/account_down_icon"
                 android:gravity="center"
                 android:shadowColor="@color/black"
                 android:shadowDx="1"
                 android:shadowDy="1"
                 android:shadowRadius="1"
                 android:textColor="@color/white"
-                android:textSize="16sp"/>
+                android:textSize="18sp"
+                tools:text="1 down\n0 not down"/>
 
             <TextView
                 android:id="@+id/account_not_down_count"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/account_down_count"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:shadowColor="@color/black"
@@ -114,9 +123,9 @@
                 android:shadowDy="1"
                 android:shadowRadius="1"
                 android:textColor="@color/white"
-                android:textSize="16sp"/>
+                android:textSize="18sp"/>
 
-        </LinearLayout>
+        </RelativeLayout>
 
     </LinearLayout>
 
