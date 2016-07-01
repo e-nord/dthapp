@@ -10,18 +10,24 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.dth.app.Constants;
+import com.dth.app.InviteUtils;
 import com.dth.app.R;
 import com.parse.CountCallback;
+import com.parse.FunctionCallback;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
+import java.util.Collection;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import timber.log.Timber;
 
 public class ContactsInviteFragment extends Fragment {
 
@@ -83,9 +89,25 @@ public class ContactsInviteFragment extends Fragment {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO send text invites
+                sendInvites(contactsList.getSelectedContacts());
             }
         });
+    }
+
+    private void sendInvites(Collection<ContactsListFragment.Contact> contacts){
+        for(ContactsListFragment.Contact contact : contacts){
+            if(contact.getPhoneNumber() != null){
+                InviteUtils.inviteContact(contact.getPhoneNumber(), new FunctionCallback<ParseObject>() {
+                    @Override
+                    public void done(ParseObject object, ParseException e) {
+                        if(e != null) {
+                            Timber.e(e, "Failed to refer contact");
+                            Toast.makeText(getContext(), "Failed to refer one or more contacts", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }
     }
 
     private void setStickersPrize(){

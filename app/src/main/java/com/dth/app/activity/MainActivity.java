@@ -21,7 +21,7 @@ import android.widget.Toast;
 
 import com.dth.app.LoginManager;
 import com.dth.app.R;
-import com.dth.app.fragment.AccountFragment;
+import com.dth.app.fragment.UserFragment;
 import com.dth.app.fragment.ContactsInviteFragment;
 import com.dth.app.fragment.EventCreateFragment;
 import com.dth.app.fragment.EventDetailFragment;
@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void displayUserAccount(ParseUser user) {
-        AccountFragment fragment = AccountFragment.newInstance(user.getObjectId());
+        UserFragment fragment = UserFragment.newInstance(user.getObjectId());
         showFragment(fragment, "account", true);
     }
 

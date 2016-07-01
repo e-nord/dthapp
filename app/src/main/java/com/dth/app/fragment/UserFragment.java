@@ -27,7 +27,7 @@ import butterknife.ButterKnife;
 import jp.wasabeef.picasso.transformations.BlurTransformation;
 import timber.log.Timber;
 
-public class AccountFragment extends Fragment {
+public class UserFragment extends Fragment {
 
     @Bind(R.id.account_username)
     TextView username;
@@ -47,10 +47,10 @@ public class AccountFragment extends Fragment {
     @Bind(R.id.account_dth_count)
     TextView dthCount;
 
-    public static AccountFragment newInstance(String userObjectId) {
+    public static UserFragment newInstance(String userObjectId) {
         Bundle args = new Bundle();
         args.putString("userObjectId", userObjectId);
-        AccountFragment f = new AccountFragment();
+        UserFragment f = new UserFragment();
         f.setArguments(args);
         return f;
     }

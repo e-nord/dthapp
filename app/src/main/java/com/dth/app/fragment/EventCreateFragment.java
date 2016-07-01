@@ -15,11 +15,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.dth.app.Constants;
+import com.dth.app.InviteUtils;
 import com.dth.app.Location;
 import com.dth.app.R;
 import com.parse.FindCallback;
+import com.parse.FunctionCallback;
 import com.parse.GetCallback;
 import com.parse.ParseACL;
 import com.parse.ParseException;
@@ -132,7 +135,7 @@ public class EventCreateFragment extends Fragment {
                 final EventInviteFragment fragment = EventInviteFragment.newInstance();
                 fragment.setOnUsersInvitedListener(new EventInviteFragment.OnUsersInvitedListener() {
                     @Override
-                    public void onUsersInvited(final List<ParseUser> users, boolean isPublic) {
+                    public void onUsersInvited(final List<ParseUser> users, final List<ContactsListFragment.Contact> contacts, boolean isPublic) {
                         final String eventDescription = eventDescriptionEdit.getText().toString();
                         final String dtText = eventTitle.getText().toString();
                         final String eventType = isPublic ? Constants.DTHEventTypePublic : Constants.DTHEventTypePrivate;
@@ -149,6 +152,7 @@ public class EventCreateFragment extends Fragment {
                                             if(listener != null){
                                                 listener.onEventCreated(event);
                                             }
+                                            inviteContacts(contacts);
                                             getActivity().getSupportFragmentManager().
                                                     beginTransaction().
                                                     setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right).
@@ -186,6 +190,24 @@ public class EventCreateFragment extends Fragment {
                         commit();
             }
         });
+    }
+
+    private void inviteContacts(List<ContactsListFragment.Contact> contacts){
+        for(ContactsListFragment.Contact contact : contacts) {
+            if (contact.getPhoneNumber() != null) {
+                InviteUtils.inviteContact(contact.getPhoneNumber(), new FunctionCallback<ParseObject>() {
+                    @Override
+                    public void done(ParseObject object, ParseException e) {
+                        if(e == null) {
+                            Toast.makeText(getContext(), "SMS invitation sent!", Toast.LENGTH_LONG).show();
+                        } else {
+                            Timber.e(e, "Failed to invite an SMS contact");
+                            Toast.makeText(getContext(), "Failed to invite one or more SMS contacts", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
+        }
     }
 
     private void inviteUsers(final List<ParseUser> users, ParseObject event, SaveCallback callback) {

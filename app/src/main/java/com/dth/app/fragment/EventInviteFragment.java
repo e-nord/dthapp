@@ -72,6 +72,7 @@ public class EventInviteFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 final List<ParseUser> users = new LinkedList<>();
+                final List<ContactsListFragment.Contact> contacts = new LinkedList<>();
                 boolean isPublic = false;
                 for (ContactsListFragment.Contact contact : friendsList.getSelectedContacts()) {
                     if (contact.getUser() != null) {
@@ -80,10 +81,12 @@ public class EventInviteFragment extends Fragment {
                         } else {
                             users.add(contact.getUser());
                         }
+                    } else {
+                        contacts.add(contact);
                     }
                 }
                 users.add(ParseUser.getCurrentUser());
-                inviteListener.onUsersInvited(users, isPublic);
+                inviteListener.onUsersInvited(users, contacts, isPublic);
             }
         });
 
@@ -99,7 +102,7 @@ public class EventInviteFragment extends Fragment {
     }
 
     public interface OnUsersInvitedListener {
-        void onUsersInvited(List<ParseUser> users, boolean isPublic);
+        void onUsersInvited(List<ParseUser> users, List<ContactsListFragment.Contact> contacts, boolean isPublic);
     }
 
     private static final class ContactsFragmentPagerAdapter extends FragmentPagerAdapter {

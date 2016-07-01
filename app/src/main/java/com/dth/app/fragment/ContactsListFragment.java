@@ -138,7 +138,7 @@ public abstract class ContactsListFragment extends ListFragment implements Adapt
         void onContactUnselected(Contact contact);
     }
 
-    public class Contact {
+    public static class Contact {
         private final String name;
         private final String profilePicUrl;
         private final String phoneNumber;
