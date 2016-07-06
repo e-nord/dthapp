@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.provider.Telephony;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
@@ -26,10 +25,6 @@ import android.widget.FilterQueryProvider;
 import android.widget.SectionIndexer;
 
 import com.dth.app.R;
-
-import java.util.ArrayList;
-
-import io.branch.invite.util.BranchInviteUtil;
 
 public class PhoneContactListFragment extends ContactsListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -123,31 +118,6 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         adapter.swapCursor(null);
-    }
-
-    public Intent getInviteIntent(String referralUrl, ArrayList<String> selectedContacts, String subject, String message) {
-        Intent inviteIntent;
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            inviteIntent = new Intent(Intent.ACTION_SENDTO);
-            inviteIntent.addCategory(Intent.CATEGORY_DEFAULT);
-            inviteIntent.setType("vnd.android-dir/mms-sms");
-            inviteIntent.setData(Uri.parse("sms:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
-            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
-        } else {
-            inviteIntent = new Intent(Intent.ACTION_SENDTO);
-            inviteIntent.setType("text/plain");
-            inviteIntent.putExtra("sms_body", message + "\n" + referralUrl);
-            inviteIntent.setData(Uri.parse("smsto:" + Uri.encode(BranchInviteUtil.formatListToCSV(selectedContacts))));
-
-            // In any old version of SMS app checking for subject and text params
-            inviteIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
-            inviteIntent.putExtra(android.content.Intent.EXTRA_TEXT, message + "\n" + referralUrl);
-            inviteIntent.putExtra("address", BranchInviteUtil.formatListToCSV(selectedContacts));
-
-            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(getContext());
-            inviteIntent.setPackage(defaultSmsPackageName);
-        }
-        return inviteIntent;
     }
 
     private class ContactsAdapter extends CursorAdapter implements SectionIndexer {

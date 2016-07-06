@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,16 +22,22 @@ import android.widget.Toast;
 
 import com.dth.app.LoginManager;
 import com.dth.app.R;
-import com.dth.app.fragment.UserFragment;
 import com.dth.app.fragment.ContactsInviteFragment;
 import com.dth.app.fragment.EventCreateFragment;
 import com.dth.app.fragment.EventDetailFragment;
 import com.dth.app.fragment.EventListFragment;
 import com.dth.app.fragment.HomeFragment;
 import com.dth.app.fragment.NearbyFragment;
+import com.dth.app.fragment.UserFragment;
 import com.facebook.appevents.AppEventsLogger;
+import com.joanfuentes.hintcase.ContentHolder;
+import com.joanfuentes.hintcase.HintCase;
+import com.joanfuentes.hintcaseassets.shapeanimators.RevealCircleShapeAnimator;
+import com.joanfuentes.hintcaseassets.shapeanimators.UnrevealCircleShapeAnimator;
+import com.joanfuentes.hintcaseassets.shapes.CircularShape;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
+import com.orhanobut.hawk.Hawk;
 import com.parse.ParseFacebookUtils;
 import com.parse.ParseObject;
 import com.parse.ParseUser;
@@ -38,18 +45,19 @@ import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.BottomBarTab;
 import com.roughike.bottombar.OnTabClickListener;
 
-import org.json.JSONObject;
-
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.cketti.mailto.EmailIntentBuilder;
+import io.branch.indexing.BranchUniversalObject;
 import io.branch.referral.Branch;
 import io.branch.referral.BranchError;
+import io.branch.referral.util.LinkProperties;
 import timber.log.Timber;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String KEY_INTRO_SHOWN = "intro_shown";
     private BottomBar bottomBar;
 
     @Bind(R.id.activity_main_section_pager)
@@ -91,27 +99,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
-        }
-
-        Branch branch = Branch.getInstance();
-
-        branch.initSession(new Branch.BranchReferralInitListener() {
-            @Override
-            public void onInitFinished(JSONObject referringParams, BranchError error) {
-                if (error == null) {
-                    // params are the deep linked params associated with the link that the user clicked -> was re-directed to this app
-                    // params will be empty if no data found
-                    // ... insert custom logic here ...
-                } else {
-                    Timber.e("Branch initialization error: %s", error.getMessage());
-                }
-            }
-        }, getIntent().getData(), this);
-
-        Intent intent = getIntent();
-        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-            Uri uri = intent.getData();
-            //TODO url parsing and showing event details
         }
 
         setContentView(R.layout.activity_main);
@@ -210,9 +197,69 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        if (LoginManager.INSTANCE.isFirstLogin()) {
-//            new HintCase(getWindow().getDecorView()).setTarget(dthIcon, true).show();
-//        }
+        Intent intent = getIntent();
+        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            Uri uri = intent.getData();
+            //TODO url parsing and showing event details
+        }
+
+        getWindow().getDecorView().post(new Runnable() {
+            @Override
+            public void run() {
+                maybeShowIntro();
+            }
+        });
+    }
+
+    private void maybeShowIntro(){
+        if (!Hawk.get(KEY_INTRO_SHOWN, false)){
+            ViewGroup container = (ViewGroup) bottomBar.findViewById(R.id.bb_bottom_bar_item_container);
+            final ImageView dthIcon = (ImageView) container.getChildAt(1).findViewById(R.id.bb_bottom_bar_icon);
+
+            ContentHolder holder = new ContentHolder() {
+                @Override
+                public View getView(Context context, HintCase hintCase, ViewGroup parent) {
+                    return getLayoutInflater().inflate(R.layout.intro_view, parent, false);
+                }
+            };
+
+            new HintCase(getWindow().getDecorView()).
+                    setTarget(dthIcon, new CircularShape(), HintCase.TARGET_IS_CLICKABLE, R.dimen.zero).
+                    setCloseOnTouchView(true).
+                    setOverDecorView(true, this).
+                    setHintBlock(holder).
+                    setShapeAnimators(new RevealCircleShapeAnimator(1000), new UnrevealCircleShapeAnimator(1000)).
+                    setOnClosedListener(new HintCase.OnClosedListener() {
+                        @Override
+                        public void onClosed() {
+                            Hawk.put(KEY_INTRO_SHOWN, true);
+                        }
+                    }).
+                    show();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        Branch branch = Branch.getInstance();
+        branch.initSession(new Branch.BranchUniversalReferralInitListener() {
+            @Override
+            public void onInitFinished(BranchUniversalObject branchUniversalObject, LinkProperties linkProperties, BranchError error) {
+                if (error == null && branchUniversalObject != null) {
+                    // This code will execute when your app is opened from a Branch deep link, which
+                    // means that you can route to a custom activity depending on what they clicked.
+                    // In this example, we'll just print out the data from the link that was clicked.
+                    Log.i("BranchTestBed", "referring Branch Universal Object: " + branchUniversalObject.toString());
+
+//                    // check if the item is contained in the metadata
+//                    if (branchUniversalObject.getMetadata().containsKey("item_id")) {
+//
+//                    }
+                }
+            }
+        }, getIntent().getData(), this);
     }
 
     @Override
