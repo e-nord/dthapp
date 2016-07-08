@@ -1,10 +1,12 @@
 package com.dth.app.fragment;
 
 import android.app.AlarmManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.AppCompatSpinner;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -21,7 +23,7 @@ import com.dth.app.Constants;
 import com.dth.app.InviteUtils;
 import com.dth.app.Location;
 import com.dth.app.R;
-import com.parse.FindCallback;
+import com.dth.app.activity.MainActivity;
 import com.parse.FunctionCallback;
 import com.parse.GetCallback;
 import com.parse.ParseACL;
@@ -29,6 +31,7 @@ import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.ParseQueryAdapter;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
@@ -42,6 +45,8 @@ import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import it.sephiroth.android.library.widget.AdapterView;
+import it.sephiroth.android.library.widget.HListView;
 import timber.log.Timber;
 
 public class EventCreateFragment extends Fragment {
@@ -54,8 +59,8 @@ public class EventCreateFragment extends Fragment {
     EditText eventDescriptionEdit;
     @Bind(R.id.event_create_next_button)
     Button next;
-    @Bind(R.id.event_create_suggestions_container)
-    ViewGroup suggestionsContainer;
+    @Bind(R.id.event_create_suggestions_list)
+    HListView suggestionsList;
 
     private OnEventCreatedListener listener;
 
@@ -70,20 +75,50 @@ public class EventCreateFragment extends Fragment {
         return view;
     }
 
-    public void getDefaultSuggestions() {
+    public ParseQuery<ParseObject> getDefaultSuggestionsQuery() {
         ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Defaults");
         query.whereEqualTo("type", "defaultDT");
         query.orderByAscending("order");
-        query.findInBackground(new FindCallback<ParseObject>() {
+        return query;
+    }
+
+    private void loadSuggestions(){
+        ParseQueryAdapter.QueryFactory<ParseObject> factory = new ParseQueryAdapter.QueryFactory<ParseObject>() {
             @Override
-            public void done(List<ParseObject> objects, ParseException e) {
-                if (objects != null) {
-
-                } else if (e != null) {
-
-                }
+            public ParseQuery<ParseObject> create() {
+                return getDefaultSuggestionsQuery();
+            }
+        };
+        ParseQueryAdapter<ParseObject> adapter = new ParseQueryAdapter<ParseObject>(getActivity(), factory, R.layout.suggestion_view) {
+            @Override
+            public View getNextPageView(View v, ViewGroup parent) {
+                return LayoutInflater.from(getContext()).inflate(R.layout.load_more_small, parent, false);
+            }
+            @Override
+            public View getItemView(ParseObject comment, View v, ViewGroup parent) {
+                View view = super.getItemView(comment, v, parent);
+                bindSuggestionView(view, comment);
+                return view;
+            }
+        };
+        adapter.setPaginationEnabled(true);
+        adapter.setAutoload(true);
+        suggestionsList.setAdapter(adapter);
+        suggestionsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ParseObject suggestion = (ParseObject) parent.getItemAtPosition(position);
+                eventDescriptionEdit.setText(suggestion.getString("value"));
             }
         });
+    }
+
+    private void bindSuggestionView(View view, ParseObject suggestion) {
+        TextView text = (TextView) view.findViewById(R.id.suggestion_view_text);
+        text.setText(suggestion.getString("key"));
+        String colorHex = suggestion.getString("color").replaceFirst("0x", "#");
+        int color = Color.parseColor(colorHex);
+        DrawableCompat.setTint(text.getBackground(), color);
     }
 
     @Override
@@ -94,9 +129,11 @@ public class EventCreateFragment extends Fragment {
             @Override
             public void onVisibilityChanged(boolean isOpen) {
                 if (isOpen) {
-                    suggestionsContainer.setVisibility(View.VISIBLE);
+                    ((MainActivity)getActivity()).getBottomBar().hide();
+                    suggestionsList.setVisibility(View.VISIBLE);
                 } else {
-                    suggestionsContainer.setVisibility(View.GONE);
+                    suggestionsList.setVisibility(View.GONE);
+                    ((MainActivity)getActivity()).getBottomBar().show();
                 }
             }
         });
@@ -190,6 +227,8 @@ public class EventCreateFragment extends Fragment {
                         commit();
             }
         });
+
+        loadSuggestions();
     }
 
     private void inviteContacts(List<ContactsListFragment.Contact> contacts){

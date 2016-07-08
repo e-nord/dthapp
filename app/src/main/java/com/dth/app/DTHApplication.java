@@ -1,7 +1,6 @@
 package com.dth.app;
 
 import android.app.Application;
-import android.util.Log;
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
@@ -22,14 +21,6 @@ public class DTHApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable ex) {
-                Log.e("DTHApplication", "Crash", ex);
-                handler.uncaughtException(thread, ex);
-            }
-        });
         Timber.plant(new Timber.DebugTree());
 //        Fabric.with(this, new Digits(), new Crashlytics());
         Hawk.init(this)

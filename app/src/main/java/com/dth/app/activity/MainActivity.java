@@ -64,6 +64,10 @@ public class MainActivity extends AppCompatActivity {
     ViewPager sectionPager;
     private EventListFragment.OnUserSelectedListener userListener;
 
+    public BottomBar getBottomBar() {
+        return bottomBar;
+    }
+
     private static void launchFeedback(Activity activity) {
         Intent intent = EmailIntentBuilder.from(activity).build();
         //TODO populate fields

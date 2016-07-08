@@ -56,7 +56,8 @@
                 android:id="@+id/event_detail_guest_list"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_margin="12dp"/>
+                android:layout_margin="12dp"
+                android:listSelector="@android:color/transparent"/>
 
             <TextView
                 android:id="@+id/event_detail_visibility_label"

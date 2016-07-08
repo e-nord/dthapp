@@ -1,17 +1,15 @@
 package com.dth.app.fragment;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
@@ -32,6 +30,8 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
     private static final String SORT = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
     private static final String SELECT = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " CONTAINS ?";
     private static String[] PROJECTION = null;
+
+    private static final int REQUEST_CODE_READ_CONTACTS = 5;
 
     static {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -75,7 +75,13 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
 
     }
 
-    private static final int REQUEST_CODE_READ_CONTACTS = 5;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == REQUEST_CODE_READ_CONTACTS && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            getLoaderManager().initLoader(0, null, this);
+        }
+    }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -85,16 +91,8 @@ public class PhoneContactListFragment extends ContactsListFragment implements Lo
         setListShown(false);
 
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CODE_READ_CONTACTS);
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CODE_READ_CONTACTS);
         } else {
-            getLoaderManager().initLoader(0, null, this);
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_CODE_READ_CONTACTS && resultCode == Activity.RESULT_OK){
             getLoaderManager().initLoader(0, null, this);
         }
     }

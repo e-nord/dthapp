@@ -77,12 +77,13 @@
 
     </ScrollView>
 
-    <FrameLayout
-        android:id="@+id/event_create_suggestions_container"
+    <it.sephiroth.android.library.widget.HListView
+        android:id="@+id/event_create_suggestions_list"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="72dp"
         android:layout_alignParentBottom="true"
-        android:background="@color/about_libraries_accent"
+        android:background="@color/white"
+        android:listSelector="@android:color/transparent"
         android:visibility="gone"/>
 
 </RelativeLayout>
